@@ -9,7 +9,8 @@
  * Enable:
  *  - install at above path
  *  - add to /store/scripts/ovmsmain.js:
- *        heatasist = require("lib/heatasist");
+ *        heatAssist = require("lib/heatassist")
+ *        heatAssist.startAssist()
  *  - script reload
  * 
  * Config:
