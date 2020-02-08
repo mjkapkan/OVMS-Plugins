@@ -28,7 +28,8 @@ exports.startAssist = function() {
 
     var mainEventName = "usr.heatassist."
     var checkIntervalMs = 5000
-    var assistOffset = 6
+    var assistOffset = 2
+    var min12BatV = 12
 
     function contains(item,string) {
         if (item.indexOf(string) > -1) {
@@ -56,6 +57,11 @@ exports.startAssist = function() {
         }
     }
 
+    function getNumMetric(metricCmd) {
+        var metricStr = loadConfig(metricCmd)[0].split(" ").slice(-1)[0]
+        return parseFloat(metricStr)
+    }
+
     function checkTempDiff(realMetric,setpointMetric,offsetDeg) {
         var setstr = loadConfig(setpointMetric)[0].split("°")[0].split(" ").slice(-1)[0]
         var realstr = loadConfig(realMetric)[0].split("°")[0].split(" ").slice(-1)[0]
@@ -68,6 +74,11 @@ exports.startAssist = function() {
         else {
             return false
         }
+    }
+
+    function getNumMetric(metricCmd) {
+        var metricStr = loadConfig(metricCmd)[0].split(" ").slice(-1)[0]
+        return parseFloat(metricStr)
     }
 
     function portON(state) {
@@ -126,7 +137,7 @@ exports.startAssist = function() {
     
         function assistEngage() {
             OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
-            if (metricStatus("metrics list v.e.heating") && (checkTempDiff("metrics list v.e.cabintemp","metrics list xnl.cc.setpoint",assistOffset) || metricStatus("metrics list xnl.cc.vent.def"))) {
+            if ((getNumMetric("metric list v.b.12v.voltage") > min12BatV) && metricStatus("metrics list v.e.heating") && (checkTempDiff("metrics list v.e.cabintemp","metrics list xnl.cc.setpoint",assistOffset) || metricStatus("metrics list xnl.cc.vent.def"))) {
                 if (!assistOn) {
                     var switchStatus = extPowerON(true)
                     if (switchStatus) {
@@ -143,8 +154,6 @@ exports.startAssist = function() {
                     OvmsEvents.Raise(mainEventName + 'heating.off')
                 }
             }
-            
-            
             // print("waiting...")
         }
     
