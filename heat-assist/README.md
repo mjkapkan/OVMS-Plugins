@@ -1,4 +1,4 @@
-# OVMS-Plugins
+# Heat Assist Plugin for OVMS V3
 Nissan Leaf Heating Assist Plugin for OVMS V3.
 
 This plugin allows for an external heating element to be controlled by using metrics from vehicle climate control system. Currently only the following version of OVMS is supported (until it's tested and merged with the official release):
