@@ -46,9 +46,15 @@ exports.startAssist = function() {
         return configList
     }
 
-    function metricStatus(cmd) {
+    function metricStatus(cmd,customMatch) {
         var metricResponse = loadConfig(cmd)
-        var metricValue = metricResponse[0].match(/ yes/g)
+        if (customMatch != undefined) {
+            var matchstring = customMatch
+        }
+        else {
+            var matchstring = / yes/g
+        }
+        var metricValue = metricResponse[0].match(matchstring)
         if (metricValue) {
             return true
         }
@@ -137,7 +143,7 @@ exports.startAssist = function() {
     
         function assistEngage() {
             OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
-            if ((getNumMetric("metric list v.b.12v.voltage") > min12BatV) && metricStatus("metrics list v.e.heating") && (checkTempDiff("metrics list v.e.cabintemp","metrics list xnl.cc.setpoint",assistOffset) || metricStatus("metrics list xnl.cc.vent.def"))) {
+            if ((getNumMetric("metric list v.b.12v.voltage") > min12BatV) && metricStatus("metrics list v.e.heating") && (checkTempDiff("metrics list v.e.cabintemp","metrics list v.e.cabin.setpoint",assistOffset) || (metricStatus("me li v.e.cabin.vent",/ screen/g) && !metricStatus("me li v.e.cabin.vent",/feet/g)))) {
                 if (!assistOn) {
                     var switchStatus = extPowerON(true)
                     if (switchStatus) {
