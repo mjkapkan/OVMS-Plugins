@@ -4,7 +4,7 @@
  * Module plugin:
  *  Heating assist module for controlling external heating element based on vehicle climate control metrics.
  * 
- * Version 0.8   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 0.9   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -28,8 +28,8 @@ exports.startAssist = function() {
 
     var mainEventName = "usr.heatassist."
     var checkIntervalMs = 5000
-    var assistOffset = 2
-    var min12BatV = 12
+    var assistOffset = 6
+    var min12BatV = 12.3
 
     function contains(item,string) {
         if (item.indexOf(string) > -1) {
@@ -112,30 +112,40 @@ exports.startAssist = function() {
         }
       }
 
-      function extPowerON(state) {
-        if (state) {
-            cmdStatus = loadConfig("power ext12v on")
-            if (contains(cmdStatus[0],"now")) {
-                print("Success! 12V Power ON")
-                return true
-            }
-            else {
-                print("12V Power ON Command Failed")
-                return false
-            }
+    function extPowerON(state) {
+    if (state) {
+        cmdStatus = loadConfig("power ext12v on")
+        if (contains(cmdStatus[0],"now")) {
+            print("Success! 12V Power ON")
+            return true
         }
         else {
-            cmdStatus = loadConfig("power ext12v off")
-            if (contains(cmdStatus[0],"now")) {
-                print("Success! 12V Power OFF")
-                return true
-            }
-            else {
-                print("12V Power OFF Command Failed")
-                return false
-            }
+            print("12V Power ON Command Failed")
+            return false
         }
-      }
+    }
+    else {
+        cmdStatus = loadConfig("power ext12v off")
+        if (contains(cmdStatus[0],"now")) {
+            print("Success! 12V Power OFF")
+            return true
+        }
+        else {
+            print("12V Power OFF Command Failed")
+            return false
+        }
+    }
+    }
+
+    function setAssistStatus(state) {
+        var asistStatus = "on"
+        if (state) {
+            asistStatus = "off"
+        }
+        OvmsCommand.Exec("config set vehicle heatasist.heating " + asistStatus)
+        OvmsEvents.Raise(mainEventName + 'heating.' + asistStatus)
+
+    }
     
     function assistKeeper() {
         OvmsEvents.Raise(mainEventName + 'status.enabled')
@@ -143,12 +153,13 @@ exports.startAssist = function() {
     
         function assistEngage() {
             OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
+
             if ((getNumMetric("metric list v.b.12v.voltage") > min12BatV) && metricStatus("metrics list v.e.heating") && (checkTempDiff("metrics list v.e.cabintemp","metrics list v.e.cabin.setpoint",assistOffset) || (metricStatus("me li v.e.cabin.vent",/ screen/g) && !metricStatus("me li v.e.cabin.vent",/feet/g)))) {
                 if (!assistOn) {
                     var switchStatus = extPowerON(true)
                     if (switchStatus) {
                         assistOn = true
-                        OvmsEvents.Raise(mainEventName + 'heating.on')
+                        setAssistStatus(assistOn)
                     }
                 }
                 
@@ -157,7 +168,7 @@ exports.startAssist = function() {
                 var switchStatus = extPowerON(false)
                 if (switchStatus) {
                     assistOn = false
-                    OvmsEvents.Raise(mainEventName + 'heating.off')
+                    setAssistStatus(assistOn)
                 }
             }
             // print("waiting...")
