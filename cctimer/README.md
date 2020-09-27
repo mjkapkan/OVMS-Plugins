@@ -13,10 +13,6 @@ The plugin was tested with Nissan Leaf 2013, but should work with any OVMS suppo
 
 NOTE: Some metrics such as fan speed, setpoint temp. and ventilation status might not be supported by your vehicle, but you can still use the plugin for setting the climate control timers.
 
-### For Nissan Leaf owners (2011-2016)
-Until the new metrics are introduced in the main release, you can use the OVMS V3 firmware from the following repository:
-https://github.com/mjkapkan/Open-Vehicle-Monitoring-System-3
-
 ## Installation
 
 Plugin requires back-end and front-end to work.
