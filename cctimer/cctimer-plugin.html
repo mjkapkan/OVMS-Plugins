@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.2  Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.1.3   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -35,6 +35,16 @@
     .btn-off {
       color: rgb(100, 100, 100);
     }
+    .monitored {
+      text-shadow: none;
+      font-weight: bold;
+      cursor: default;
+    }
+    #monitored {
+      text-shadow: none;
+      font-weight: bold;
+      cursor: default;
+    }
 
     </style>
     
@@ -44,40 +54,43 @@
         <div class="container-fluid" id="climate-status">
           <div class="row" id="temperature-info">
             <div style="margin-top:0.5em" class="col-lg-2 col-md-4 col-xs-12">
-              <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled" id="climate-control-state" actvstl="btn-success"><strong>CLIMATE CONTROL OFF</strong></label>
+              <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" id="climate-control-state" actvstl="btn-success"><strong>CLIMATE CONTROL OFF</strong></label>
             </div>
             <div style="margin-top:0.5em" class="col-lg-1 col-md-4 col-xs-6">
               <label class="btn btn-default col-lg-12 col-md-8 col-xs-12" id="climate-heating" actvstl="btn-warning"><strong>HEAT OFF</strong></label>
             </div>
+            <!-- <div style="margin-top:0.5em" class="col-lg-1 col-md-4 col-xs-6">
+              <label class="btn btn-default col-lg-12 col-md-8 col-xs-12" id="climate-heating-ptc" actvstl="btn-warning"><strong>PTC HEAT OFF</strong></label>
+            </div> -->
             <div class="col-lg-1 col-md-4 col-xs-6" style="margin-top:0.5em">
               <label class="btn btn-default col-lg-12 col-md-8 col-xs-12" id="climate-cooling" actvstl="btn-info"><strong>A/C OFF</strong></label>
             </div>
             <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-2 col-md-4 col-xs-12">
-              <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled"><strong>CABIN TEMP.</strong></label><label class="btn btn-default col-xs-3 col-md-3 active ">
+              <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-8 col-md-8 col-xs-7 disabled" id="monitored"><strong>CABIN TEMP.</strong></label><label class="btn btn-default col-xs-3 col-md-3 col-lg-4 active monitored">
                 <span class="value" id="temperature-cabin">-</span>
                 <span class="unit">C°</span>
               </label></div>
             </div>
-            <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-2 col-md-4 col-xs-12">
-              <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled"><strong>SETPOINT TEMP.</strong></label><label class="btn btn-default col-xs-3 col-md-3 active " data-toggle="tooltip" data-original-title="Available when Climate Control is ON only">
+            <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-3 col-md-4 col-xs-12">
+              <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled" id="monitored"><strong>SETPOINT TEMP.</strong></label><label class="btn btn-default col-xs-3 col-md-3 active monitored" data-toggle="tooltip" data-original-title="Available when Climate Control is ON only">
                 <span class="value" id="temperature-setpoint">-</span>
                 <span class="unit">C°</span>
               </label></div>
             </div>
             <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-2 col-md-3 col-xs-12">
-              <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled"><strong>FAN SPEED</strong></label><label class="btn btn-default col-xs-3 col-md-3 active">
+              <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled" id="monitored"><strong>FAN SPEED</strong></label><label class="btn btn-default col-xs-3 col-md-3 active monitored">
                 <span class="value" id="fan-speed">-</span>
               </label></div>
             </div>
         </div>
         <div class="row" id="air-info">
           <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-3 col-md-4 col-xs-12">
-            <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-6 col-md-6 col-xs-6 disabled"><strong>VENTILATION</strong></label><label class="btn btn-default text-uppercase col-lg-6 col-md-6 col-xs-6 active ">
+            <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-6 col-md-6 col-xs-6 disabled" id="monitored"><strong>VENTILATION</strong></label><label class="btn btn-default text-uppercase col-lg-6 col-md-6 col-xs-6 active monitored">
               <span class="value" id="air-vent">-</span>
             </label></div>
           </div>
           <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-3 col-md-4 col-xs-12">
-            <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-6 col-md-6 col-xs-6 disabled"><strong>AIR INTAKE</strong></label><label class="btn btn-default text-uppercase col-lg-6 col-md-6 col-xs-6 active ">
+            <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-6 col-md-6 col-xs-6 disabled" id="monitored"><strong>AIR INTAKE</strong></label><label class="btn btn-default text-uppercase col-lg-6 col-md-6 col-xs-6 active monitored">
               <span class="value" id="air-intake">-</span>
             </label></div>
           </div>
@@ -94,7 +107,7 @@
           <div class="row" id="action-buttons">
             <div style="margin:0.5em" class="col-xs-12">
               <div class="btn-group" data-toggle="buttons"> 
-                <label class="btn btn-default disabled" data-toggle="tooltip" data-original-title="Control disbaled while Timer is active. Turn off active Timer instead.">
+                <label class="btn btn-default disabled" id="monitored" data-toggle="tooltip" data-original-title="Control disbaled while Timer is active. Turn off active Timer instead.">
                   <input type="radio" name="pre-heat"><strong>PRE-HEAT</strong></label>
                 <label class="btn btn-default disabled" id="stop-preheat" data-target="#vehicle-cmdres" stored-cmd="climatecontrol off">
                   <input type="radio" name="stop">STOP</label>
@@ -300,20 +313,30 @@
 
       }
 
-      function waitForMetricResponseAndRender (waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic){
+      // Multi Purpose code part starts
+      function waitForMetricResponseAndRender (waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText){
             if(typeof waitDict[waitElement]  !== "undefined" || timeoutMs < 0){
                 var metricRaw = waitDict[waitElement]
                 var metricText = ""
-                if (metricRaw != undefined) {
-                  metricText = metricRaw.split(metricValue).slice(-1)[0].trim().replace("°C","") /* :) */
+                if (metricRaw != undefined && metricRaw) {
+                  metricText = metricRaw.split(metricValue)[1].split(/\r?\n/)[0].trim().replace("°C","").replace("%","") /* :) */
+                  if (boolValue != undefined && boolValue) {
+                    if (contains(metricText,"yes")) {
+                      metricText = true
+                    }
+                    else {
+                      metricText = false
+                    }
+                  }
+                  renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
                 }
-                renderMetric (metricText,metricID,boolValue,reversedLogic)
+                
 
             }
             else{
                 timeoutMs -= waitInterval
                 setTimeout( function() {
-                  waitForMetricResponseAndRender(waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic)
+                  waitForMetricResponseAndRender(waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
                 }, waitInterval)
             }
         }
@@ -350,35 +373,56 @@
             }
         }
 
-      function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic) {
+      function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText) {
         var metricText = ''
         if (Object.keys(window).includes(metricValue)) {
+          // console.log('Getting window metric:', metricValue)
           metricText = window[metricValue]
-          renderMetric (metricText,metricID,boolValue,reversedLogic)
+          renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
         }
         else if (Object.keys(metrics).includes(metricValue)) {
+          // console.log('Getting default metric:', metricValue)
           metricText = metrics[metricValue]
-          renderMetric (metricText,metricID,boolValue,reversedLogic)
+          renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
         }
         else {
-          waitForMetricResponseAndRender(loadcmd("metric list " + metricValue),"responseText",metricValue,metricID,2000,100,boolValue,reversedLogic)
+          // console.log('Getting custom metric:', metricValue)
+          waitForMetricResponseAndRender(loadcmd("metric list " + metricValue),"responseText",metricValue,metricID,2000,100,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
         }
         return metricText
       }
 
-      function monitorMetric (metricValue,metricID,boolValue,reversedLogic){
-        getMetricAndRender(metricValue,metricID,boolValue,reversedLogic)
+      function monitorMetric (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText){
+        getMetricAndRender(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
 
         setTimeout( function() {
-          monitorMetric(metricValue,metricID,boolValue,reversedLogic)
-        }, 1000)
+          monitorMetric(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
+        }, 3000)
       }
 
-      function renderMetric (metricText,metricID,boolValue,reversedLogic){
+      function renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText){
         var metricIDVal = "#" + metricID
-        if (boolValue == undefined) {
-          if (metricText == '') {
-            metricText = '-'
+        if ((boolValue == undefined || !boolValue) && metricText == '') {
+          return
+        }
+        if (boolValue == undefined || !boolValue) {
+          if (numDecimals != undefined) {
+            metricText = parseFloat(metricText).toFixed(numDecimals)
+            if (reversedLogic != undefined && reversedLogic) {
+              metricText = metricText * -1
+            }
+          }
+          
+          if (pgBar) {
+            var metricPct = metricText
+            if (pgMax != undefined && pgMax) {
+              metricPct = parseFloat(metricText)*100/pgMax
+            }
+            metricPct = metricPct + "%"
+            $(metricIDVal).attr('aria-valuenow',metricPct)
+            $(metricIDVal).attr('style',"width: " + metricPct + ";")
+
+            metricText = metricText + " " + pgUnit
           }
           $(metricIDVal).text(metricText)
         }
@@ -390,7 +434,12 @@
           var oldText = $(metricIDVal).html()
           if (metricText) {
             if (oldText != undefined) {
-              $(metricIDVal).html(oldText.replace(" OFF"," ON"))
+              if (customText != undefined && customText) {
+                $(metricIDVal).html(oldText.replace(customText,""))
+              }
+              else{
+                $(metricIDVal).html(oldText.replace(" OFF"," ON"))
+              }
             }
             $(metricIDVal).removeClass("disabled btn-off")
             $(metricIDVal).addClass($(metricIDVal).attr('actvstl'))
@@ -406,7 +455,12 @@
           }
           else {
             if (oldText != undefined) {
-              $(metricIDVal).html(oldText.replace(" ON"," OFF"))
+              if (customText != undefined && customText) {
+                $(metricIDVal).html(customText + oldText.replace(customText,""))
+              }
+              else{
+                $(metricIDVal).html(oldText.replace(" ON"," OFF"))
+              }
             }
             $(metricIDVal).off("click")
             $(metricIDVal).removeClass($(metricIDVal).attr('actvstl'))
@@ -421,6 +475,8 @@
           }
         }
       }
+
+      // Multi Purpose code part ends
 
       function loadTimers(confDict,confElement,fetchActiveOnly) {
           var timerDict = {}
@@ -746,13 +802,14 @@
         login()
       }
       else {
-        monitorMetric("v.e.cabintemp","temperature-cabin")
-        monitorMetric("v.e.cabin.setpoint","temperature-setpoint")
-        monitorMetric("v.e.cabin.vent","air-vent")
-        monitorMetric("v.e.cabin.intake","air-intake")
-        monitorMetric("v.e.cabin.fan","fan-speed")
+        monitorMetric("v.e.cabintemp","temperature-cabin",undefined,undefined,1)
+        monitorMetric("v.e.cabinsetpoint","temperature-setpoint",undefined,undefined,1)
+        monitorMetric("v.e.cabinvent","air-vent")
+        monitorMetric("v.e.cabinintake","air-intake")
+        monitorMetric("v.e.cabinfan","fan-speed")
         monitorMetric("v.e.hvac","climate-control-state",true)
         monitorMetric("v.e.heating","climate-heating",true)
+        // monitorMetric("power ext12v status","climate-heating-ptc",true,undefined,"is on")
         monitorMetric("v.e.cooling","climate-cooling",true)
         monitorMetric("remoteHeat","stop-preheat",true)
         monitorMetric("v.e.heating","start-preheat",true,true)
