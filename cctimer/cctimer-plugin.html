@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.3   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.4   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -57,10 +57,10 @@
               <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" id="climate-control-state" actvstl="btn-success"><strong>CLIMATE CONTROL OFF</strong></label>
             </div>
             <div style="margin-top:0.5em" class="col-lg-1 col-md-4 col-xs-6">
-              <label class="btn btn-default col-lg-12 col-md-8 col-xs-12" id="climate-heating" actvstl="btn-warning"><strong>HEAT OFF</strong></label>
+              <label class="btn btn-default col-lg-12 col-md-8 col-xs-12 monitored" id="climate-heating" actvstl="btn-warning"><strong>HEAT OFF</strong></label>
             </div>
             <!-- <div style="margin-top:0.5em" class="col-lg-1 col-md-4 col-xs-6">
-              <label class="btn btn-default col-lg-12 col-md-8 col-xs-12" id="climate-heating-ptc" actvstl="btn-warning"><strong>PTC HEAT OFF</strong></label>
+              <label class="btn btn-default col-lg-12 col-md-8 col-xs-12 monitored" id="climate-heating-ptc" actvstl="btn-warning"><strong>PTC HEAT OFF</strong></label>
             </div> -->
             <div class="col-lg-1 col-md-4 col-xs-6" style="margin-top:0.5em">
               <label class="btn btn-default col-lg-12 col-md-8 col-xs-12" id="climate-cooling" actvstl="btn-info"><strong>A/C OFF</strong></label>
@@ -313,170 +313,182 @@
 
       }
 
-      // Multi Purpose code part starts
-      function waitForMetricResponseAndRender (waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText){
-            if(typeof waitDict[waitElement]  !== "undefined" || timeoutMs < 0){
-                var metricRaw = waitDict[waitElement]
-                var metricText = ""
-                if (metricRaw != undefined && metricRaw) {
-                  metricText = metricRaw.split(metricValue)[1].split(/\r?\n/)[0].trim().replace("°C","").replace("%","") /* :) */
-                  if (boolValue != undefined && boolValue) {
-                    if (contains(metricText,"yes")) {
-                      metricText = true
-                    }
-                    else {
-                      metricText = false
-                    }
-                  }
-                  renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
+    // Multi Purpose code part starts
+   function waitForMetricResponseAndRender (waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText){
+          if(typeof waitDict[waitElement]  != "undefined" || timeoutMs < 0){
+              var metricRaw = waitDict[waitElement]
+              var metricText = ""
+              if (metricRaw != undefined && metricRaw && !contains(metricRaw,"Unrecognised metric name") && !contains(metricRaw,"Usage:")) {
+                metricText = metricRaw.split(metricValue)[1]
+                if (metricText == undefined) {
+                  metricText = metricRaw
                 }
-                
+                metricText = metricText.split(/\r?\n/)[0].trim().replace("°C","").replace("%","") /* :) */
+                if (boolValue != undefined && boolValue) {
+                  if (contains(metricText,"yes") || contains(metricText,"on")) {
+                    metricText = true
+                  }
+                  else {
+                    metricText = false
+                  }
+                }
+                renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+              }
+              
 
-            }
-            else{
-                timeoutMs -= waitInterval
-                setTimeout( function() {
-                  waitForMetricResponseAndRender(waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
-                }, waitInterval)
-            }
-        }
+          }
+          else{
+              timeoutMs -= waitInterval
+              setTimeout( function() {
+                waitForMetricResponseAndRender(waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+              }, waitInterval)
+          }
+      }
 
-      function waitForTimers(waitDict,waitElement,fetchActiveOnly){
-            if(typeof waitDict[waitElement]  !== "undefined"){
-                
+    function waitForTimers(waitDict,waitElement,fetchActiveOnly){
+          if(typeof waitDict[waitElement]  !== "undefined"){
+              
+              if (fetchActiveOnly == undefined) {
+                window.timerDictList = loadTimers(waitDict,waitElement,fetchActiveOnly)
+                flushTimers(window.timerDictList)
+                renderTimers(window.timerDictList)
+                $("#reload-info").remove()
+              }
+              else {
+                loadTimers(waitDict,waitElement,fetchActiveOnly)
+                updateActiveTimer(window.timerDictList)
+                if (metrics["v.e.hvac"] && !window.activeTimer) {
+                  window.remoteHeat = true
+                }
+                else (
+                  window.remoteHeat = false
+                )
+              }
+              
+
+          }
+          else{
+              setTimeout( function() {
                 if (fetchActiveOnly == undefined) {
-                  window.timerDictList = loadTimers(waitDict,waitElement,fetchActiveOnly)
-                  flushTimers(window.timerDictList)
-                  renderTimers(window.timerDictList)
-                  $("#reload-info").remove()
+                  appendToHtml("#reload-info",".")
                 }
-                else {
-                  loadTimers(waitDict,waitElement,fetchActiveOnly)
-                  updateActiveTimer(window.timerDictList)
-                  if (metrics["v.e.hvac"] && !window.activeTimer) {
-                    window.remoteHeat = true
-                  }
-                  else (
-                    window.remoteHeat = false
-                  )
-                }
-                
+                waitForTimers(waitDict,waitElement,fetchActiveOnly)
+              }, 100)
+          }
+      }
 
+    function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand) {
+      var metricText = ''
+      if (Object.keys(window).includes(metricValue)) {
+        // console.log('Getting window metric:', metricValue)
+        metricText = window[metricValue]
+        renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+      }
+      else if (Object.keys(metrics).includes(metricValue)) {
+        // console.log('Getting default metric:', metricValue)
+        metricText = metrics[metricValue]
+        renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+      }
+      else if (window.usrMetrics != undefined && Object.keys(window.usrMetrics).includes(metricValue)) {
+        // console.log('Getting user metric:', metricValue)
+        metricText = window.usrMetrics[metricValue]
+        renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+      }
+      else if (customCommand) {
+        // console.log('Getting custom metric:', metricValue)
+        waitForMetricResponseAndRender(loadcmd(metricValue),"responseText",metricValue,metricID,2000,100,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+      }
+      return metricText
+    }
+
+    function monitorMetric (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand){
+      getMetricAndRender(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
+
+      setTimeout( function() {
+        monitorMetric(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
+      }, 1000)
+    }
+
+    function renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText){
+      var metricIDVal = "#" + metricID
+      if ((boolValue == undefined || !boolValue) && metricText == '') {
+        return
+      }
+      if (boolValue == undefined || !boolValue) {
+        if (numDecimals != undefined) {
+          metricText = parseFloat(metricText).toFixed(numDecimals)
+          if (reversedLogic != undefined && reversedLogic) {
+            metricText = metricText * -1
+          }
+        }
+        
+        if (pgBar) {
+          var metricPct = metricText
+          if (pgMax != undefined && pgMax) {
+            metricPct = parseFloat(metricText)*100/pgMax
+          }
+          metricPct = metricPct + "%"
+          $(metricIDVal).attr('aria-valuenow',metricPct)
+          $(metricIDVal).attr('style',"width: " + metricPct + ";")
+        }
+
+        if (metricUnit != undefined && metricUnit) {
+          metricText = metricText + " " + metricUnit
+        }
+
+        $(metricIDVal).text(metricText)
+      }
+      else {
+        if (reversedLogic != undefined && reversedLogic) {
+          metricText = !metricText
+        }
+        var disabledStyle = "color:grey"
+        var oldText = $(metricIDVal).html()
+        if (metricText) {
+          if (oldText != undefined) {
+            if (customText != undefined && customText) {
+              $(metricIDVal).html(oldText.replace(customText,""))
             }
             else{
-                setTimeout( function() {
-                  if (fetchActiveOnly == undefined) {
-                    appendToHtml("#reload-info",".")
-                  }
-                  waitForTimers(waitDict,waitElement,fetchActiveOnly)
-                }, 100)
+              $(metricIDVal).html(oldText.replace(" OFF"," ON"))
             }
-        }
-
-      function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText) {
-        var metricText = ''
-        if (Object.keys(window).includes(metricValue)) {
-          // console.log('Getting window metric:', metricValue)
-          metricText = window[metricValue]
-          renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
-        }
-        else if (Object.keys(metrics).includes(metricValue)) {
-          // console.log('Getting default metric:', metricValue)
-          metricText = metrics[metricValue]
-          renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
-        }
-        else {
-          // console.log('Getting custom metric:', metricValue)
-          waitForMetricResponseAndRender(loadcmd("metric list " + metricValue),"responseText",metricValue,metricID,2000,100,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
-        }
-        return metricText
-      }
-
-      function monitorMetric (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText){
-        getMetricAndRender(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
-
-        setTimeout( function() {
-          monitorMetric(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText)
-        }, 1000)
-      }
-
-      function renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,pgUnit,customText){
-        var metricIDVal = "#" + metricID
-        if ((boolValue == undefined || !boolValue) && metricText == '') {
-          return
-        }
-        if (boolValue == undefined || !boolValue) {
-          if (numDecimals != undefined) {
-            metricText = parseFloat(metricText).toFixed(numDecimals)
-            if (reversedLogic != undefined && reversedLogic) {
-              metricText = metricText * -1
-            }
+          }
+          $(metricIDVal).removeClass("disabled btn-off")
+          $(metricIDVal).addClass($(metricIDVal).attr('actvstl'))
+          if ($(metricIDVal).attr('stored-cmd') != undefined) {
+            $(metricIDVal).attr('data-cmd',$(metricIDVal).attr('stored-cmd'))
+          }
+          $(metricIDVal).addClass("active")
+          if ($(metricIDVal).attr('style') != undefined) {
+            $(metricIDVal).attr('style',$(metricIDVal).attr('style').replace(disabledStyle,""))
           }
           
-          if (pgBar) {
-            var metricPct = metricText
-            if (pgMax != undefined && pgMax) {
-              metricPct = parseFloat(metricText)*100/pgMax
-            }
-            metricPct = metricPct + "%"
-            $(metricIDVal).attr('aria-valuenow',metricPct)
-            $(metricIDVal).attr('style',"width: " + metricPct + ";")
-
-            metricText = metricText + " " + pgUnit
-          }
-          $(metricIDVal).text(metricText)
+          
         }
         else {
-          if (reversedLogic != undefined && reversedLogic) {
-            metricText = !metricText
+          if (oldText != undefined) {
+            if (customText != undefined && customText) {
+              $(metricIDVal).html(customText + oldText.replace(customText,""))
+            }
+            else{
+              $(metricIDVal).html(oldText.replace(" ON"," OFF"))
+            }
           }
-          var disabledStyle = "color:grey"
-          var oldText = $(metricIDVal).html()
-          if (metricText) {
-            if (oldText != undefined) {
-              if (customText != undefined && customText) {
-                $(metricIDVal).html(oldText.replace(customText,""))
-              }
-              else{
-                $(metricIDVal).html(oldText.replace(" OFF"," ON"))
-              }
-            }
-            $(metricIDVal).removeClass("disabled btn-off")
-            $(metricIDVal).addClass($(metricIDVal).attr('actvstl'))
-            if ($(metricIDVal).attr('stored-cmd') != undefined) {
-              $(metricIDVal).attr('data-cmd',$(metricIDVal).attr('stored-cmd'))
-            }
-            $(metricIDVal).addClass("active")
-            if ($(metricIDVal).attr('style') != undefined) {
-              $(metricIDVal).attr('style',$(metricIDVal).attr('style').replace(disabledStyle,""))
-            }
-            
-            
+          $(metricIDVal).off("click")
+          $(metricIDVal).removeClass($(metricIDVal).attr('actvstl'))
+          $(metricIDVal).removeClass("active")
+          $(metricIDVal).addClass("disabled btn-off")
+          if ($(metricIDVal).attr('data-cmd') != undefined) {
+            $(metricIDVal).removeAttr('data-cmd')
           }
-          else {
-            if (oldText != undefined) {
-              if (customText != undefined && customText) {
-                $(metricIDVal).html(customText + oldText.replace(customText,""))
-              }
-              else{
-                $(metricIDVal).html(oldText.replace(" ON"," OFF"))
-              }
-            }
-            $(metricIDVal).off("click")
-            $(metricIDVal).removeClass($(metricIDVal).attr('actvstl'))
-            $(metricIDVal).removeClass("active")
-            $(metricIDVal).addClass("disabled btn-off")
-            if ($(metricIDVal).attr('data-cmd') != undefined) {
-              $(metricIDVal).removeAttr('data-cmd')
-            }
-            if ($(metricIDVal).attr('style') != undefined) {
-              $(metricIDVal).attr('style',$(metricIDVal).attr('style') + disabledStyle)
-            }
+          if ($(metricIDVal).attr('style') != undefined) {
+            $(metricIDVal).attr('style',$(metricIDVal).attr('style') + disabledStyle)
           }
         }
       }
+    }
 
-      // Multi Purpose code part ends
+    // Multi Purpose code part ends
 
       function loadTimers(confDict,confElement,fetchActiveOnly) {
           var timerDict = {}
@@ -809,7 +821,7 @@
         monitorMetric("v.e.cabinfan","fan-speed")
         monitorMetric("v.e.hvac","climate-control-state",true)
         monitorMetric("v.e.heating","climate-heating",true)
-        // monitorMetric("power ext12v status","climate-heating-ptc",true,undefined,"is on")
+        // monitorMetric("power ext12v status","climate-heating-ptc",true,undefined," ON",undefined,undefined,undefined,undefined,true)
         monitorMetric("v.e.cooling","climate-cooling",true)
         monitorMetric("remoteHeat","stop-preheat",true)
         monitorMetric("v.e.heating","start-preheat",true,true)
