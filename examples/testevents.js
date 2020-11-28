@@ -5,7 +5,7 @@
  * 3. Add below two lines to: /store/scripts/ovmsmain.js
  *     testPubSub = require("lib/testevents")
  *     testPubSub.startTest()
- * 6. run "script reload" in console or reboot module
+ * 4. run "script reload" in console or reboot module
  * 
  * Sample Script to test triggering fuctions each n miliseconds as specified in runIntervalMs
  */
