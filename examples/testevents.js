@@ -1,9 +1,9 @@
 /**
  * How to set up:
  * 1. Save this file as: 
- * 2. /store/scripts/lib/test.js
+ * 2. /store/scripts/lib/testevents.js
  * 3. Add below two lines to: /store/scripts/ovmsmain.js
- *     testPubSub = require("lib/test")
+ *     testPubSub = require("lib/testevents")
  *     testPubSub.startTest()
  * 6. run "script reload" in console or reboot module
  * 
