@@ -26,8 +26,8 @@ exports.startTest = function() {
                 testCount += 1
                 print(mainEventName + ": " + testCount)
             }
-            catch (err) {print("ERROR: TestCrash Failed! " + testCount)
-                print("ERROR: TestCrash Failed! " + testCount)
+            catch (err) {
+                print("ERROR: Script " + mainEventName + " Failed! " + testCount)
                 OvmsCommand.Exec("script reload")
             }
         }
