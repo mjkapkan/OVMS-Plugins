@@ -11,6 +11,11 @@
  *  - add to /store/scripts/ovmsmain.js:
  *        heatAssist = require("lib/heatassist")
  *        heatAssist.startAssist()
+ *  - As a percaution I recommend adding additional control to turn off heating when vehicle is turned off (use revelvant egpio on/off comamnd if you don't use ext12v):
+ *      - add to /store/events/vehicle.on/ext12v
+ *            power ext12v on
+ *      - add to /store/events/vehicle.off/ext12v
+ *            power ext12v off
  *  - script reload
  * 
  * Config:
