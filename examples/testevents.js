@@ -28,7 +28,7 @@ exports.startTest = function() {
             }
             catch (err) {
                 print("ERROR: Script " + mainEventName + " Failed! " + testCount)
-                OvmsCommand.Exec("script reload")
+//                 OvmsCommand.Exec("script reload") // script reload can not be invoked from inside js at the moment
             }
         }
     
