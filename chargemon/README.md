@@ -1,6 +1,6 @@
 # Charging Monitor Plugin for OVMS V3
 
-![Mobile View](readme_images/chargemon_gui.png)
+![Mobile View](readme_images/mobile_img.png)
 
 
 ## Description
