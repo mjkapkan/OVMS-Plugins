@@ -1,11 +1,11 @@
 # Charging Monitor Plugin for OVMS V3
 
-![Mobile View](readme_images/mobile_img.png)
+<img src="readme_images/mobile_img.png" alt="drawing" width="200"/>
 
 
 ## Description
 This plugin allows to see power delivered to the battery when charging. Currently it is configured for Nissan Leaf and the power bar will go to max 50kW.
-The Plugin is currently in BETA state so the information may lag or be inaccurate. Still this is usefull on long trips when batteyr temperature needs to be optimal for fast charging.
+The Plugin is currently in BETA state so the information may lag or be inaccurate. Still this is usefull on long trips when battery temperature needs to be optimal for fast charging.
 
 ## Installation
 
