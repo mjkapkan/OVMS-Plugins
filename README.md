@@ -6,6 +6,7 @@ Currently the plugins have been designed and tested mainly on 2013 Nissan Leaf w
 ## Available Plugins
  - [Heating Assist](heat-assist)
  - [Climate Control Timers](cctimer)
+ - [Charging Monitor](chargemon)
 
 Plugins are usually frontend page + backend script, but here you might find some working scripts that are called plugins withut front end. This is becasue I did not havetime to make fronteds for them yet, or they are insignificant to require a fronted.
 
