@@ -1,0 +1,434 @@
+<!-- *
+ * WEB Plugin Module Install from Config>Web Plugins
+ * 
+ * Module plugin:
+ *  Charging Monitor
+ * 
+ * Version 1.1.1   Jaunius Kapkan <jaunius@gmx.com>
+ * 
+ * Enable:
+ *  - Add this file to Web Plugins as Page.
+ * -->
+
+
+ <style>
+  html {
+    scroll-behavior: smooth;
+  }
+  h2 {
+    font-size: 12px;
+  }
+  h3 {
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+  .btn-off {
+    color: rgb(100, 100, 100);
+  }
+  .monitored {
+    text-shadow: none;
+    font-weight: bold;
+    cursor: default;
+  }
+  #monitored {
+    text-shadow: none;
+    font-weight: bold;
+    cursor: default;
+  }
+  .progress-bar {
+    padding: 0.45em 0.45em 0 1em;
+    font-size: 1.2em;
+    text-shadow: 0.1em 0.1em 0.7em dimgray;
+    text-align: center;
+    font-weight: bold;
+    background-color: green;
+  }
+  .power-bar {
+    font-weight: bold;
+    background-color: purple;
+  }
+  .temp-bar {
+    font-weight: bold;
+    background-color: darkorange;
+  }
+  </style>
+  
+  <div class="panel panel-primary">
+    <div class="panel-heading">Charging Power and Status</div>
+    <div class="panel-body">
+      <div class="container-fluid" id="charging-status">
+        <div class="row" id="status-info">
+          <div style="margin-top:0.5em" class="col-lg-3 col-md-4 col-xs-12">
+            <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" id="charging-state" actvstl="btn-success">
+              <strong>CHARGING</strong>
+              <span style="font-size:0.85em; padding:0 0 0 1em;" class="progress-bar-default">+</span>
+              <span style="font-size:0.85em;" class="progress-bar-default" id="charged-energy" ></span>
+              <span style="font-size:0.85em; padding:0 0 0 0;" class="progress-bar-default">| +</span>
+              <span style="font-size:0.85em;" class="progress-bar-default" id="charged-km" ></span>
+            </label>
+          </div>
+          <div style="padding: 0; margin-top:0.5em; margin-left:1em; height: 2.5em" class="progress col-lg-4 col-md-7 col-xs-11">
+            <div class="progress-bar text-nowrap progress-bar-striped progress-bar-animated monitored" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="battery-soc">-</div>
+          </div>
+        </div>
+        <div class="row" id="power-info">
+          <div style="margin-top:0.5em" class="col-lg-3 col-md-4 col-xs-12">
+            <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" >
+              <strong>CHARGE RATE</strong>
+              <span style="font-size:0.85em; padding:0 0 0 0;" class="progress-bar-default">at</span>
+              <span style="font-size:0.85em;" class="progress-bar-default" id="charge-rate" ></span>
+            </label>
+          </div>
+          <div style="padding: 0; margin-top:0.5em; margin-left:1em; height: 2.5em" class="progress col-lg-4 col-md-7 col-xs-11">
+            <div class="progress-bar text-nowrap power-bar progress-bar-striped progress-bar-animated monitored" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="50" id="battery-power-bar">-</div>
+          </div>
+          <!-- <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-3 col-md-4 col-xs-12">
+            <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled" id="monitored"><strong>MAINS VOLTAGE</strong></label><label class="btn btn-default col-xs-3 col-md-3 active monitored">
+              <span class="value" id="mains-voltage">-</span>
+              <span class="unit">V</span>
+            </label></div>
+          </div> -->
+        </div>
+        <div class="row" id="temp-info">
+          <div style="margin-top:0.5em" class="col-lg-3 col-md-4 col-xs-12">
+            <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" ><strong>TEMPERATURE</strong></label>
+          </div>
+          <div style="padding: 0; margin-top:0.5em; margin-left:1em; height: 2.5em" class="progress col-lg-4 col-md-7 col-xs-11">
+            <div class="progress-bar text-nowrap temp-bar progress-bar-striped progress-bar-animated monitored" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="50" id="battery-temp-bar">-</div>
+          </div>
+        </div>
+        <div class="row" id="batt-info">
+          <div class="btn-group col-lg-2 col-md-4 col-xs-6""> 
+            <label class="btn btn-default col-lg-7 col-md-8 col-xs-7 disabled" id="monitored"><strong>VOLTS</strong></label><label class="btn btn-default col-xs-5 col-md-3 col-lg-5 active monitored">
+            <span class="value" id="battery-voltage">-</span>
+            <span class="unit">V</span>
+          </label></div>
+          <div class="btn-group col-lg-2 col-md-4 col-xs-6"> 
+            <label class="btn btn-default col-lg-7 col-md-8 col-xs-7 disabled" id="monitored"><strong>RANGE</strong></label><label class="btn btn-default col-xs-5 col-md-3 col-lg-5 active monitored">
+            <span class="value" id="vehicle-range">-</span>
+            <span class="unit">km</span>
+          </label></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="panel panel-primary">
+      <div class="panel-heading">Controls</div>
+      <div class="panel-body" id="charge-controls">
+        <div class="container-fluid" id="charging-controls">
+          <div class="row" id="action-buttons">
+            <div style="margin:0.5em" class="col-xs-12">
+              <div class="btn-group" data-toggle="buttons"> 
+                <label class="btn btn-default disabled " id="monitored">
+                  <input type="radio" name="pre-heat"><strong>CHARGE</strong></label>
+                <label class="btn btn-default disabled" id="stop-charge" data-target="#vehicle-cmdres" stored-cmd="charge stop">
+                  <input type="radio" name="stop">STOP</label>
+                <label class="btn btn-default disabled" id="start-charge" data-target="#vehicle-cmdres" stored-cmd="charge start">
+                  <input type="radio" name="start">START</label>
+                  </div>
+            </div>
+        </div>
+
+      </div>
+    </div>
+    </div>
+  </div>
+  
+  
+  <script>
+  (function(){
+
+    function contains(item,string) {
+      if (item.indexOf(string) > -1) {
+          return true
+      }
+      else {
+          return false
+      }
+    }
+
+    function replaceAll (itemString,stringList,replaceWith) {
+      var newString = itemString
+      for (let stringToReplace of stringList) {
+        var currentRegex = new RegExp("\\" + stringToReplace, "g")
+        newString = newString.replace(currentRegex,replaceWith)
+      }
+      return newString
+    }
+
+    function appendToHtml (trargetId,htmlContent) {
+      var currentHtml = $(trargetId).html()
+      $(trargetId).html(currentHtml + htmlContent)
+    }
+
+    function saveGetStatus (cmd) {
+            window.savePending.push(loadcmd(cmd))
+          }
+          
+    function sendConfigCmds(execList) {
+      var delayIncreaser = 0
+      for (itemnum in execList) {
+        setTimeout(saveGetStatus,300*delayIncreaser,execList[itemnum])
+        delayIncreaser++
+      };
+    }
+
+    function removeFromList(itemList,item) {
+        var updatedList = itemList.filter(function(e) { return e !== item })
+        return updatedList
+    }
+
+ // Multi Purpose code part starts
+ function waitForMetricResponseAndRender (waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText){
+        if(typeof waitDict[waitElement]  != "undefined" || timeoutMs < 0){
+            var metricRaw = waitDict[waitElement]
+            var metricText = ""
+            if (metricRaw != undefined && metricRaw && !contains(metricRaw,"Unrecognised metric name") && !contains(metricRaw,"Usage:")) {
+              metricText = metricRaw.split(metricValue)[1]
+              if (metricText == undefined) {
+                metricText = metricRaw
+              }
+              metricText = metricText.split(/\r?\n/)[0].trim().replace("°C","").replace("%","") /* :) */
+              if (boolValue != undefined && boolValue) {
+                if (contains(metricText,"yes") || contains(metricText,"on")) {
+                  metricText = true
+                }
+                else {
+                  metricText = false
+                }
+              }
+              renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+            }
+            
+
+        }
+        else{
+            timeoutMs -= waitInterval
+            setTimeout( function() {
+              waitForMetricResponseAndRender(waitDict,waitElement,metricValue,metricID,timeoutMs,waitInterval,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+            }, waitInterval)
+        }
+    }
+
+  function waitForTimers(waitDict,waitElement,fetchActiveOnly){
+        if(typeof waitDict[waitElement]  !== "undefined"){
+            
+            if (fetchActiveOnly == undefined) {
+              window.timerDictList = loadTimers(waitDict,waitElement,fetchActiveOnly)
+              flushTimers(window.timerDictList)
+              renderTimers(window.timerDictList)
+              $("#reload-info").remove()
+            }
+            else {
+              loadTimers(waitDict,waitElement,fetchActiveOnly)
+              updateActiveTimer(window.timerDictList)
+              if (metrics["v.e.hvac"] && !window.activeTimer) {
+                window.remoteHeat = true
+              }
+              else (
+                window.remoteHeat = false
+              )
+            }
+            
+
+        }
+        else{
+            setTimeout( function() {
+              if (fetchActiveOnly == undefined) {
+                appendToHtml("#reload-info",".")
+              }
+              waitForTimers(waitDict,waitElement,fetchActiveOnly)
+            }, 100)
+        }
+    }
+
+  function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand) {
+    var metricText = ''
+    if (Object.keys(window).includes(metricValue)) {
+      // console.log('Getting window metric:', metricValue)
+      metricText = window[metricValue]
+      renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+    }
+    else if (Object.keys(metrics).includes(metricValue)) {
+      // console.log('Getting default metric:', metricValue)
+      metricText = metrics[metricValue]
+      renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+    }
+    else if (window.usrMetrics != undefined && Object.keys(window.usrMetrics).includes(metricValue)) {
+      // console.log('Getting user metric:', metricValue)
+      metricText = window.usrMetrics[metricValue]
+      renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+    }
+    else if (customCommand) {
+      // console.log('Getting custom metric:', metricValue)
+      waitForMetricResponseAndRender(loadcmd(metricValue),"responseText",metricValue,metricID,2000,100,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+    }
+    return metricText
+  }
+
+  function monitorMetric (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand){
+    getMetricAndRender(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
+
+    window.monitoring[metricValue] = setTimeout( function() {
+      monitorMetric(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
+    }, 1000)
+  }
+
+  function renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText){
+    var metricIDVal = "#" + metricID
+    if ((boolValue == undefined || !boolValue) && metricText == '') {
+      return
+    }
+    if (boolValue == undefined || !boolValue) {
+      if (numDecimals != undefined) {
+        metricText = parseFloat(metricText).toFixed(numDecimals)
+        if (reversedLogic != undefined && reversedLogic) {
+          metricText = metricText * -1
+        }
+      }
+      
+      if (pgBar) {
+        var metricPct = metricText
+        if (pgMax != undefined && pgMax) {
+          metricPct = parseFloat(metricText)*100/pgMax
+        }
+        metricPct = metricPct + "%"
+        $(metricIDVal).attr('aria-valuenow',metricPct)
+        $(metricIDVal).attr('style',"width: " + metricPct + ";")
+      }
+
+      if (metricUnit != undefined && metricUnit) {
+        metricText = metricText + " " + metricUnit
+      }
+
+      $(metricIDVal).text(metricText)
+    }
+    else {
+      if (reversedLogic != undefined && reversedLogic) {
+        metricText = !metricText
+      }
+      var disabledStyle = "color:grey"
+      var oldText = $(metricIDVal).html()
+      if (metricText) {
+        if (oldText != undefined) {
+          if (customText != undefined && customText) {
+            $(metricIDVal).html(oldText.replace(customText,""))
+          }
+          else{
+            $(metricIDVal).html(oldText.replace(" OFF"," ON"))
+          }
+        }
+        $(metricIDVal).removeClass("disabled btn-off")
+        $(metricIDVal).addClass($(metricIDVal).attr('actvstl'))
+        if ($(metricIDVal).attr('stored-cmd') != undefined) {
+          $(metricIDVal).attr('data-cmd',$(metricIDVal).attr('stored-cmd'))
+        }
+        $(metricIDVal).addClass("active")
+        if ($(metricIDVal).attr('style') != undefined) {
+          $(metricIDVal).attr('style',$(metricIDVal).attr('style').replace(disabledStyle,""))
+        }
+        
+        
+      }
+      else {
+        if (oldText != undefined) {
+          if (customText != undefined && customText) {
+            $(metricIDVal).html(customText + oldText.replace(customText,""))
+          }
+          else{
+            $(metricIDVal).html(oldText.replace(" ON"," OFF"))
+          }
+        }
+        $(metricIDVal).off("click")
+        $(metricIDVal).removeClass($(metricIDVal).attr('actvstl'))
+        $(metricIDVal).removeClass("active")
+        $(metricIDVal).addClass("disabled btn-off")
+        if ($(metricIDVal).attr('data-cmd') != undefined) {
+          $(metricIDVal).removeAttr('data-cmd')
+        }
+        if ($(metricIDVal).attr('style') != undefined) {
+          $(metricIDVal).attr('style',$(metricIDVal).attr('style') + disabledStyle)
+        }
+      }
+    }
+  }
+
+  // Multi Purpose code part ends
+
+    function addCalcMetrics () {
+      if (metrics != undefined) {
+        let newMetric = parseFloat(metrics["xnl.v.b.e.available"]) / parseFloat(usrMetrics["usr.v.b.range"])
+        if (newMetric != NaN) {
+          usrMetrics["usr.v.consumption"] = newMetric
+        }
+
+        newMetric = parseFloat(metrics["v.c.kwh"]) / parseFloat(usrMetrics["usr.v.consumption"])
+        if (newMetric != NaN) {
+          usrMetrics["usr.v.c.km"] = newMetric
+        }
+
+        newMetric = parseFloat(metrics["v.b.power"]) / parseFloat(usrMetrics["usr.v.consumption"])
+        if (newMetric != NaN) {
+          usrMetrics["usr.v.c.rate"] = newMetric
+        }
+        
+        newMetric = ( parseFloat(metrics["v.b.range.est"]) + parseFloat(metrics["v.b.range.ideal"]) ) / 2
+        if (newMetric != NaN) {
+          usrMetrics["usr.v.b.range"] = newMetric
+        }
+      }
+    }
+
+    function monitorCalcMetrics (timeoutMs){
+      addCalcMetrics ()
+      setTimeout( function() {
+        monitorCalcMetrics(timeoutMs)
+      }, timeoutMs)
+    }
+
+    window.mobilecheck = function() {
+      var check = false;
+      (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+      return check;
+    };
+
+    if (!window.loggedin) {
+      $("#charge-controls").prepend('<div class="bg-info">Please login to control charging. <a class="btn btn-sm btn-default" href="javascript:login()">Login</a></div>')
+    }
+    else {
+      window.usrMetrics = {}
+
+      // clear monitoring
+      if (window.monitoring != undefined) {
+          for (let metricMon in window.monitoring) {
+            clearTimeout(window.monitoring[metricMon])
+            
+        }
+        }
+        else {
+          window.monitoring = {}
+        }
+      // start monitors
+      monitorMetric("v.c.charging","charging-state",true,undefined,undefined,undefined,undefined,undefined,"NOT ")
+      monitorMetric("v.b.soc","battery-soc",undefined,undefined,undefined,true,undefined,"%")
+      monitorMetric("v.b.power","battery-power-bar",undefined,true,2,true,50,"kW")
+      monitorMetric("v.b.temp","battery-temp-bar",undefined,undefined,1,true,50,"°C")
+      monitorMetric("v.c.charging","stop-charge",true)
+      // monitorMetric("v.c.voltage","mains-voltage",undefined,undefined,2)
+      monitorMetric("v.b.voltage","battery-voltage",undefined,undefined,0)
+      monitorMetric("usr.v.b.range","vehicle-range",undefined,undefined,0)
+      monitorMetric("v.c.charging","start-charge",true,true)
+      monitorMetric("v.c.kwh","charged-energy",false,false,2,false,false,"kWh")
+      
+      monitorCalcMetrics (1000)
+      monitorMetric("usr.v.c.km","charged-km",false,false,1,false,false,"km")
+      monitorMetric("usr.v.c.rate","charge-rate",false,true,0,false,false,"km/h")
+
+    }
+
+    
+    
+
+  })();
+  </script>
