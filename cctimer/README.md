@@ -7,6 +7,8 @@ Universal Climate Control Status & Pre-heat/cool timer Plugin for OVMS V3.
 ## Description
 This plugin allows to start and stop climate control system of supported vehicles according to user defined schedule. Usually the built-in vehicle pre-heat/pre-cool funcitonality is limited to a few timers and to how long they can be running. Meanwhile this plugin allows to have unlimited number of timers as well as unlimited time period for keeping the climate control running.
 
+### NOTE: Currently works with OVMS edge version only.
+
 WARNING: Running climate control system for a prolonged period will deplete your battery to the manufacturers set level. Make sure you understand the risks and set the timers wiseley.
 
 The plugin was tested with Nissan Leaf 2013, but should work with any OVMS supported vehicles with working cliamte control functionality.
