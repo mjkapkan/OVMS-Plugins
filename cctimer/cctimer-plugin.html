@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.4.1   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.4.2   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -115,6 +115,16 @@
                 <input type="radio" name="start">START</label>
                 </div>
           </div>
+          <!-- <div style="margin:0.5em" class="col-xs-12">
+            <div class="btn-group" data-toggle="buttons"> 
+              <label class="btn btn-default disabled" id="monitored">
+                <input type="radio" name="ext12v power"><strong>Ext. 12V</strong></label>
+              <label class="btn btn-default" id="ext12v-on" data-target="#vehicle-cmdres" stored-cmd="power ext12v off">
+                <input type="radio" name="off">TURN OFF</label>
+              <label class="btn btn-default" id="ext12v-off" data-target="#vehicle-cmdres" stored-cmd="power ext12v on">
+                <input type="radio" name="on">TURN ON</label>
+                </div>
+          </div> -->
       </div>
 
     </div>
@@ -293,6 +303,10 @@
     function monitorActiveTimer (refreshIntervalMs) {
       var timerRaw = loadcmd("config list vehicle")
       waitForTimers(timerRaw,"responseText",true)
+      if (window.monitoringreload["ActiveTimer"] != undefined) {
+        clearTimeout(window.monitoring["ActiveTimer"])
+        delete window.monitoringreload["ActiveTimer"]
+      }
       window.monitoring["ActiveTimer"] = setTimeout( function() {
         monitorActiveTimer(refreshIntervalMs)
       }, refreshIntervalMs)
@@ -377,9 +391,24 @@
         }
     }
 
+    function getEgpioStatus (egpioMetric) {
+      var egpioMetricName = egpioMetric.split('|')[0]
+      var egpioMetricValue = parseInt(egpioMetric.split('|')[1])
+      if (contains(metrics[egpioMetricName],egpioMetricValue)) {
+        return true
+      }
+      else {
+        return false
+      }
+    }
+
   function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand) {
     var metricText = ''
-    if (Object.keys(window).includes(metricValue)) {
+    if (contains(metricValue,"egpio.output")) {
+      metricText = getEgpioStatus(metricValue)
+      renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
+    }
+    else if (Object.keys(window).includes(metricValue)) {
       // console.log('Getting window metric:', metricValue)
       metricText = window[metricValue]
       renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
@@ -403,6 +432,11 @@
 
   function monitorMetric (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand){
     getMetricAndRender(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
+
+    if (window.monitoringreload[metricValue] != undefined) {
+      clearTimeout(window.monitoring[metricValue])
+      delete window.monitoringreload[metricValue]
+    }
 
     window.monitoring[metricValue] = setTimeout( function() {
       monitorMetric(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
@@ -489,6 +523,22 @@
   }
 
   // Multi Purpose code part ends
+
+  function addCalcMetrics () {
+      if (metrics != undefined) {
+        let newMetric = parseFloat(metrics["v.e.cabinfan"]) * parseFloat(metrics["v.e.cabinfanlimit"]) / 100
+        if (newMetric != NaN) {
+          usrMetrics["usr.e.cabinfan"] = Math.round(newMetric)
+        }
+      }
+    }
+
+    function monitorCalcMetrics (timeoutMs){
+      addCalcMetrics ()
+      setTimeout( function() {
+        monitorCalcMetrics(timeoutMs)
+      }, timeoutMs)
+    } 
 
     function loadTimers(confDict,confElement,fetchActiveOnly) {
         var timerDict = {}
@@ -814,28 +864,34 @@
       login()
     }
     else {
+      window.usrMetrics = {}
+      window.monitoringreload = {}
       // clear monitoring
       if (window.monitoring != undefined) {
           for (let metricMon in window.monitoring) {
-            clearTimeout(window.monitoring[metricMon])
-            
+            window.monitoringreload[metricMon] = window.monitoring[metricMon]
+            // not required anymore as handled inside functions
+            // clearTimeout(window.monitoring[metricMon]) 
         }
         }
         else {
           window.monitoring = {}
         }
       // start monitors
+      monitorCalcMetrics (1000)
       monitorMetric("v.e.cabintemp","temperature-cabin",undefined,undefined,1)
       monitorMetric("v.e.cabinsetpoint","temperature-setpoint",undefined,undefined,1)
       monitorMetric("v.e.cabinvent","air-vent")
       monitorMetric("v.e.cabinintake","air-intake")
-      monitorMetric("v.e.cabinfan","fan-speed")
+      monitorMetric("usr.e.cabinfan","fan-speed")
       monitorMetric("v.e.hvac","climate-control-state",true)
       monitorMetric("v.e.heating","climate-heating",true)
-      // monitorMetric("power ext12v status","climate-heating-ptc",true,undefined," ON",undefined,undefined,undefined,undefined,true)
+      // monitorMetric("m.egpio.output|1","climate-heating-ptc",true,undefined," ON",undefined,undefined,undefined,undefined,true)
       monitorMetric("v.e.cooling","climate-cooling",true)
       monitorMetric("remoteHeat","stop-preheat",true)
       monitorMetric("v.e.heating","start-preheat",true,true)
+      // monitorMetric("m.egpio.output|1","ext12v-off",true,true,undefined,undefined,undefined,undefined,undefined,true)
+      // monitorMetric("m.egpio.output|1","ext12v-on",true,false,undefined,undefined,undefined,undefined,undefined,true)
       monitorActiveTimer(5000)
 
 
