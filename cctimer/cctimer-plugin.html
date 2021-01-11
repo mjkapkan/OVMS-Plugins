@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.4.2   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.5   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -137,9 +137,6 @@
     <div class="panel-body">
   
     <!-- <pre class="monitor" id=fetched_timers data-updcmd="config list vehicle" data-updcnt="1">Fetching Timer List...</pre> -->
-    <div id=load-info >
-      <pre class="alert alert-info" id=reload-info >Fetching Timer List...</pre>
-    </div>
 
     <div class="list-items">
           <table id="cctimers" class="table form-table">
@@ -153,6 +150,9 @@
                   </colgroup>
               </table>
       </div>
+    <div id=load-info >
+      <pre class="alert alert-info" id=reload-info >Fetching Timer List...</pre>
+    </div>
     <button type="button" class="btn btn-success list-item-add" data-toggle="tooltip" data-original-title="Add new Timer"><strong>✚</strong></button>
   
   
@@ -160,6 +160,15 @@
           <button id="fetch_all" class="btn btn-default">Refresh</button>
           <button id="save_all" class="btn btn-primary">Save</button>
           </div>
+    
+    <div class="monitor alert alert-light bg-info text-info" role="alert" 
+      style="font-weight: bold; font-size: 0.7em; margin-top: 1em; padding-top: 0.7em; padding-bottom: 0.7em;" id="timezone_region" 
+      data-updjs="print('Your Timezone: ' + OvmsConfig.GetValues('vehicle').timezone.split('-')[0] + ' - ' + OvmsConfig.GetValues('vehicle').timezone_region)" 
+      data-updcnt="1"
+      data-toggle="tooltip" data-original-title="Timezone can be changed from Menu: Config > Vehicle"
+      >
+      Loading Timezone...
+    </div>
   
   
     </div>
@@ -303,9 +312,9 @@
     function monitorActiveTimer (refreshIntervalMs) {
       var timerRaw = loadcmd("config list vehicle")
       waitForTimers(timerRaw,"responseText",true)
-      if (window.monitoringreload["ActiveTimer"] != undefined) {
-        clearTimeout(window.monitoring["ActiveTimer"])
-        delete window.monitoringreload["ActiveTimer"]
+      if (window.monitoringreload["ActiveTimer"] != undefined) {	
+        clearTimeout(window.monitoring["ActiveTimer"])	
+        delete window.monitoringreload["ActiveTimer"]	
       }
       window.monitoring["ActiveTimer"] = setTimeout( function() {
         monitorActiveTimer(refreshIntervalMs)
@@ -390,24 +399,24 @@
             }, 100)
         }
     }
-
-    function getEgpioStatus (egpioMetric) {
-      var egpioMetricName = egpioMetric.split('|')[0]
-      var egpioMetricValue = parseInt(egpioMetric.split('|')[1])
-      if (contains(metrics[egpioMetricName],egpioMetricValue)) {
-        return true
-      }
-      else {
-        return false
-      }
-    }
+  
+  function getEgpioStatus (egpioMetric) {	
+    var egpioMetricName = egpioMetric.split('|')[0]	
+    var egpioMetricValue = parseInt(egpioMetric.split('|')[1])	
+    if (contains(metrics[egpioMetricName],egpioMetricValue)) {	
+      return true	
+    }	
+    else {	
+      return false	
+    }	
+  }	
 
   function getMetricAndRender (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand) {
     var metricText = ''
     if (contains(metricValue,"egpio.output")) {
-      metricText = getEgpioStatus(metricValue)
-      renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)
-    }
+      metricText = getEgpioStatus(metricValue)	
+      renderMetric (metricText,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText)	
+    }	
     else if (Object.keys(window).includes(metricValue)) {
       // console.log('Getting window metric:', metricValue)
       metricText = window[metricValue]
@@ -432,12 +441,10 @@
 
   function monitorMetric (metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand){
     getMetricAndRender(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
-
-    if (window.monitoringreload[metricValue] != undefined) {
-      clearTimeout(window.monitoring[metricValue])
-      delete window.monitoringreload[metricValue]
+    if (window.monitoringreload[metricValue] != undefined) {	
+      clearTimeout(window.monitoring[metricValue])	
+      delete window.monitoringreload[metricValue]	
     }
-
     window.monitoring[metricValue] = setTimeout( function() {
       monitorMetric(metricValue,metricID,boolValue,reversedLogic,numDecimals,pgBar,pgMax,metricUnit,customText,customCommand)
     }, 1000)
@@ -624,12 +631,12 @@
         }
         if (addOnly) {
           $('#' + currentTimer).append('<' + colSeparator + '><input type="text" class="form-control ' + gridSize + '12" id="timer-label-' + currentTimer + '" required="" pattern="^[a-zA-Z0-9._-]+$" placeholder="Unique name (letters: a-z/A-Z/0-9/./_/-)"  title="Letters: a-z/A-Z/0-9/./_/-" value=""></' + colSeparator + '>')
+          $('#' + currentTimer).append('<' + colSeparator + '><div class="btn-group ' + gridSize + '12" ' + gridStyle + ' data-toggle="buttons"> <label class="btn btn-default disabled ' + gridSize + '6 instasave ' + disabled + '"><input type="radio" name="disabled"> OFF</label><label class="btn btn-default data-toggle="tooltip" title="For new Timers, you must first Save to Enable." disabled ' + gridSize + '6 instasave ' + enabled + '" id="' + currentTimer + '-enabled"><input type="radio" name="enabled"> ON</label></div></' + colSeparator + '>')
         }
         else {
           $('#' + currentTimer).append('<' + colSeparator + '><span style="font-size:16px;" data-toggle="tooltip" title="Name can be set only when adding new timer." class="label ' + gridSize + '12 label-' + labelStyle + '" id="timer-label-' + currentTimer + '" value="' + currentTimer.toUpperCase() + '">' + currentTimer.toUpperCase() + timerActive + '</' + colSeparator + '>')
-        }
-
-        $('#' + currentTimer).append('<' + colSeparator + '><div class="btn-group ' + gridSize + '12" ' + gridStyle + ' data-toggle="buttons"> <label class="btn btn-default ' + gridSize + '6 instasave ' + disabled + '"><input type="radio" name="disabled"> OFF</label><label class="btn btn-default ' + gridSize + '6 instasave ' + enabled + '" id="' + currentTimer + '-enabled"><input type="radio" name="enabled"> ON</label></div></' + colSeparator + '>')
+          $('#' + currentTimer).append('<' + colSeparator + '><div class="btn-group ' + gridSize + '12" ' + gridStyle + ' data-toggle="buttons"> <label class="btn btn-default ' + gridSize + '6 instasave ' + disabled + '"><input type="radio" name="disabled"> OFF</label><label class="btn btn-default ' + gridSize + '6 instasave ' + enabled + '" id="' + currentTimer + '-enabled"><input type="radio" name="enabled"> ON</label></div></' + colSeparator + '>')
+          }
         
         $('#' + currentTimer).append('<' + colSeparator + '><div ' + gridStyle + ' class="btn-group ' + gridSize + '12"> \
                                     <label class="btn btn-default disabled ' + gridSize + '6" style="font-weight:bold; height:2.5em;">\
@@ -800,7 +807,7 @@
           }
       }
       
-      function waitForAllStatus(){
+      function waitForAllStatus(specifiedOnly){
         window.savedOk = []
         if(window.savePending.length == window.saveDone.length){
           var allSaved = true
@@ -815,7 +822,10 @@
           }
           if (allSaved) {
             $("#save-info").remove()
-            showtempInfo("#load-info","save-info-success","Saved!",15)
+            showtempInfo("#load-info","save-info-success","Saved!",5)
+            if (specifiedOnly == undefined || !specifiedOnly) {
+              reloadTimers(false)
+            }
             
           }
           else if (window.savedOk.length > 0) {
@@ -828,29 +838,29 @@
         }
         else{
             setTimeout( function() {
-              waitForAllStatus()
+              waitForAllStatus(specifiedOnly)
             }, 100)
         }
       }
 
-      function waitForSendCompletion(){
+      function waitForSendCompletion(specifiedOnly){
         if(window.saveReady.length == window.savePending.length){
           appendToHtml("#save-info","All Sent")
           for (var cctimerNum in window.savePending) {
             waitForStatus(window.savePending[cctimerNum],"responseText")
           }
-          waitForAllStatus()
+          waitForAllStatus(specifiedOnly)
 
         }
         else{
             setTimeout( function() {
               appendToHtml("#save-info",".")
-              waitForSendCompletion()
+              waitForSendCompletion(specifiedOnly)
             }, 100)
         }
       }
       
-      waitForSendCompletion()
+      waitForSendCompletion(specifiedOnly)
       
     }
 
@@ -868,15 +878,15 @@
       window.monitoringreload = {}
       // clear monitoring
       if (window.monitoring != undefined) {
-          for (let metricMon in window.monitoring) {
-            window.monitoringreload[metricMon] = window.monitoring[metricMon]
-            // not required anymore as handled inside functions
-            // clearTimeout(window.monitoring[metricMon]) 
+        for (let metricMon in window.monitoring) {
+          window.monitoringreload[metricMon] = window.monitoring[metricMon]
+          // not required anymore as handled inside functions    
+          // clearTimeout(window.monitoring[metricMon])
         }
-        }
-        else {
-          window.monitoring = {}
-        }
+      }
+      else {
+        window.monitoring = {}
+      }
       // start monitors
       monitorCalcMetrics (1000)
       monitorMetric("v.e.cabintemp","temperature-cabin",undefined,undefined,1)
@@ -895,37 +905,40 @@
       monitorActiveTimer(5000)
 
 
-      function reloadTimers () {
-      $("#load-info").empty()
-      showtempInfo("#load-info","reload-info","Fetching Timer List...")
-      var timerRaw = loadcmd("config list vehicle")
-      waitForTimers(timerRaw,"responseText")
+      function reloadTimers (clearLoadInfo) {
+        if (clearLoadInfo == undefined || clearLoadInfo) {
+          $("#load-info").empty()
+        }
+        
+        showtempInfo("#load-info","reload-info","Fetching Timer List...")
+        var timerRaw = loadcmd("config list vehicle")
+        waitForTimers(timerRaw,"responseText")
 
+        }
+        
+        $('#fetch_all').on('click', function() {
+          reloadTimers()
+          // $(window).scrollTop($('#timer-section').offset().top - 50);
+          })
+
+        $('#save_all').on('click', function() {
+          saveTimers()
+          // $(window).scrollTop($('#timer-section').offset().top - 50);
+          })
+        
+        $('.list-item-add').on('click', function() {
+          addNewTimer()
+          
+          })
+          
+        
+        var timerRaw = loadcmd("config list vehicle")
+        waitForTimers(timerRaw,"responseText")
+        
+        $('#timer_label').css ({
+            "min-width": "80px"
+        })
       }
-      
-      $('#fetch_all').on('click', function() {
-        reloadTimers()
-        $(window).scrollTop($('#timer-section').offset().top - 50);
-        })
-
-      $('#save_all').on('click', function() {
-        saveTimers()
-        $(window).scrollTop($('#timer-section').offset().top - 50);
-        })
-      
-      $('.list-item-add').on('click', function() {
-        addNewTimer()
-        
-        })
-        
-      
-      var timerRaw = loadcmd("config list vehicle")
-      waitForTimers(timerRaw,"responseText")
-      
-      $('#timer_label').css ({
-          "min-width": "80px"
-      })
-    }
 
     
     
