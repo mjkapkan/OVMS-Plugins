@@ -1,4 +1,4 @@
-# Climate Control Timer Plugin for OVMS V3
+# Climate Control Timer Plugin V1.5 for OVMS V3
 Universal Climate Control Status & Pre-heat/cool timer Plugin for OVMS V3.
 
 ![Desktop View](readme_images/cctimer_gui.png)
