@@ -19,38 +19,44 @@ NOTE: Some metrics such as fan speed, setpoint temp. and ventilation status migh
 
 Plugin requires back-end and front-end to work.
 ### Installing Back-end:
-- place the cctimer.js file in /store/scripts/lib/
-- add the following to /store/scripts/ovmsmain.js:
-ccTimer = require("lib/cctimer")
-ccTimer.ccTimerOn()
-- script reload
+- place the cctimer.js file in `/store/scripts/lib/`
+- add the following to `/store/scripts/ovmsmain.js`:
+  ```bash
+  ccTimer = require("lib/cctimer")
+  ccTimer.ccTimerOn()
+  ```
+- run `script reload` in console/shell.
 
 To uninstall, reverse steps and reboot the device.
 
 ### Installing Front-end:
-- In OVMS Web GUI go to config>Web Plugins.
-- Click on + sign, type the desired name and click save.
-- Select Page as type and click Edit on your new entry.
-- Set desired Page, Label and Location in Menu.
-- Set authorization to Cookie
-- Paste the contents of cctimer-plugin.html to the Plugin content field and click save.
+- In OVMS Web GUI go to `config > Web Plugins`.
+- Click on `+` sign, type the desired name and click save.
+- Select `Page` as type and click `Edit` on your new entry.
+- Set desired `Page`, `Label` and Location in `Menu`.
+- Set `Authorization` to None.
+- Paste the contents of `cctimer-plugin.html` to the `Plugin content` field and click `Save`.
 
-To uninstall, just remove the plugin in Web Plugins page.
+To uninstall, just remove the plugin in `Web Plugins` page.
 
 ## Usage 
 - Timers can be added in GUI or with a command in shell or from the app. For example, the following command will add a new timer in enabled state that will be active from 7AM to 8AM on Monday and Wednesday:
-"config set vehicle.cctimer 1-0700-0800-13"
+  ```bash
+  config set vehicle.cctimer 1-0700-0800-13
+  ```
 
 ## Behavior
-- Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable and then will activate the remote heating/cooling using climatecontrol command. 
-- with each check or timer on/off you will see a message in the OVMS event log.
+- Script will check metrics for matching timers each 10 seconds as specified in `checkIntervalMs` (currently not working due to Duktape Issue 474) variable and then will activate the remote heating/cooling using climatecontrol command. 
+- with each check or timer on/off you will see a message in the OVMS event log and a notification to App/WebUI.
 
-NOTE: Never remove an active timer as the script will keep turning on the CC until you reboot the unit or reload js engine.
+NOTE: Never remove an active timer as the script will keep turning ON the climate control until you reboot the unit or reload JavaScript engine.
 
 ## Known Issues
 - Save button in GUI sometimes does not save all the timers. In such cases it will show an error. Just retry and it will work.
 - If you find anything else, please report here as issues.
 
-## To-Do
+## Upcoming Features
 - Automatically calculate climate control start time depending on ambient temperature.
 - Add minimum SOC as an option for each timer.
+- Add "only while plugged-in" option.
+- Add Charging Timer functionality.
