@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.2   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.5   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -44,7 +44,7 @@ exports.ccTimerOn = function() {
     // }
 
     var mainEventName = "usr.cctimer."
-    var checkIntervalMs = 10000
+    var checkIntervalMs = 20000
     var chargingBefore = false
     var lastActivated = new Date()
     var forceRecirc = true /* Forces Recirculation only if activated while charging (saves energy) */
@@ -125,10 +125,13 @@ exports.ccTimerOn = function() {
 
     function loadTimers() {
         var timerDict = {}
-        var timerList = loadConfig("config list vehicle")
-        for (var config in timerList) {
-            var timerText = timerList[config].trim()
-            var timerParsed = parseTimer(timerText,timerDict)
+        // var timerList = loadConfig("config list vehicle") // old method
+        // for (var config in timerList) {
+          // var timerText = timerList[config].trim()
+        var timerConfDict = OvmsConfig.GetValues('vehicle')
+        for (var timerName in timerConfDict) {
+          var timerText = timerName + ": " + timerConfDict[timerName].trim()
+          var timerParsed = parseTimer(timerText,timerDict)
             // if (timerParsed) {
             //     print("Timer Loaded")
             // }
@@ -187,7 +190,7 @@ exports.ccTimerOn = function() {
                 return true
             }
             else {
-                if (parseInt(hh) == parseInt(hours) && parseInt(mm) >= parseInt(mins)) {
+                if (parseInt(hh) == parseInt(hours) && parseInt(mm) > parseInt(mins)) {
                     return true
                 }
             } 
@@ -228,7 +231,8 @@ exports.ccTimerOn = function() {
         
     
         function timerTrigger() {
-            OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
+            try {
+                OvmsEvents.Raise(mainEventName + 'heartbeat')
             
             ccTimers = loadTimers()
             if (activeTimers.length == 0) {
@@ -244,6 +248,7 @@ exports.ccTimerOn = function() {
                                 setTimerStatus(currentTimer)
                                 activeTimers.push(currentTimer)
                                 OvmsEvents.Raise(mainEventName + currentTimer + ".started")
+                                OvmsNotify.Raise('info',mainEventName,'Climate Control Started by Timer: ' + currentTimer)
                             }
                         }
                     }
@@ -251,6 +256,7 @@ exports.ccTimerOn = function() {
                     else {
                         if (!timeBetween(ccTimers[currentTimer].Start,ccTimers[currentTimer].End) || !checkWeekday(ccTimers[currentTimer].Weekdays)) {
                             OvmsEvents.Raise(mainEventName + currentTimer + ".stopped")
+                            OvmsNotify.Raise('info',mainEventName,'Climate Control Stopped by Timer: ' + currentTimer)
                             activeTimers = removeFromList(activeTimers,currentTimer)
                             if (airCon(false)) {
                                 setTimerStatus("no")
@@ -277,6 +283,7 @@ exports.ccTimerOn = function() {
                         if (airCon(false)) {
                             setTimerStatus("no")
                             OvmsEvents.Raise(mainEventName + currentTimer + ".disabled")
+                            OvmsNotify.Raise('info',mainEventName,'Climate Control Stopped as Timer has been disabled: ' + currentTimer)
                             activeTimers = removeFromList(activeTimers,currentTimer)
                         }
                     }
@@ -285,10 +292,15 @@ exports.ccTimerOn = function() {
             }
             
             // print("waiting...")
+            }
+            catch (jsError) {
+                print(jsError)
+            }
+            
         }
-    
-        PubSub.subscribe(mainEventName + "heartbeat", timerTrigger)
-        OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
+        PubSub.subscribe("ticker.10", timerTrigger)
+        //PubSub.subscribe(mainEventName + "heartbeat", timerTrigger)
+        //OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
             
     }
     print("Timer Script Loaded!")
