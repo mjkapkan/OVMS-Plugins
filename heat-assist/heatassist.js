@@ -1,10 +1,11 @@
 /**
- * /store/scripts/lib/heatassist.js
+ * /store/scripts/lib/event_heatassist.js
  * 
  * Module plugin:
  *  Heating assist module for controlling external heating element based on vehicle climate control metrics.
+ *  This versionof the script is event based, meaning that you need to setup another script in events dir to run it repeatedley.
  * 
- * Version 0.9.1   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.1   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -12,18 +13,16 @@
  *        heatAssist = require("lib/heatassist")
  *        heatAssist.startAssist()
  *  - As a percaution I recommend adding additional control to turn off heating when vehicle is turned off (use revelvant egpio on/off comamnd if you don't use ext12v):
- *      - add to /store/events/vehicle.on/ext12v
- *            power ext12v on
  *      - add to /store/events/vehicle.off/ext12v
  *            power ext12v off
  *  - script reload
  * 
  * Config:
  *  - assistOffset - sets the offset from the vehicel temperatarue setpoint at which to activate heating.
- *  - checkIntervalMs - sets the interval at which the vehicle metrics are checked and acted upon.
+ *  - I recommend subscribing to ticker.1 (default) or ticker.10 , this will in turn run the script each 1 or 10 seconds.
  * 
  * Usage:
- *  - Script will run automatically after boot each n seconds as specified in assistHbInterval variable.
+ *  - Script will run automatically after boot each n seconds as configured above. (Use ticker 1 or 10 for now, due to Duktape issue: 474)
  *  - Heating activation offset can be set with assistOffset variable.
  *  - If your ext12v port is occupied you can change extPowerON to portON function to control egpio
  *    ports (additional hardware required to control 12V relays).
@@ -32,9 +31,9 @@
 exports.startAssist = function() {
 
     var mainEventName = "usr.heatassist."
-    var checkIntervalMs = 5000
-    var assistOffset = 6
+    var assistOffset = 1.5
     var min12BatV = 12.3
+    var heartbeatLogInterval = 10
 
     function contains(item,string) {
         if (item.indexOf(string) > -1) {
@@ -44,7 +43,7 @@ exports.startAssist = function() {
             return false
         }
     }
-    
+
     function loadConfig(cmd) {
         var cmdResponse = OvmsCommand.Exec(cmd)
         var configList = cmdResponse.split("\n")
@@ -68,16 +67,9 @@ exports.startAssist = function() {
         }
     }
 
-    function getNumMetric(metricCmd) {
-        var metricStr = loadConfig(metricCmd)[0].split(" ").slice(-1)[0]
-        return parseFloat(metricStr)
-    }
-
     function checkTempDiff(realMetric,setpointMetric,offsetDeg) {
-        var setstr = loadConfig(setpointMetric)[0].split("°")[0].split(" ").slice(-1)[0]
-        var realstr = loadConfig(realMetric)[0].split("°")[0].split(" ").slice(-1)[0]
-        var setfloat = parseFloat(setstr)
-        var realfloat = parseFloat(realstr)
+        var setfloat = OvmsMetrics.AsFloat(setpointMetric)
+        var realfloat = OvmsMetrics.AsFloat(realMetric)
         var cutofffloat = setfloat - offsetDeg
         if (cutofffloat > realfloat) {
             return true
@@ -85,11 +77,6 @@ exports.startAssist = function() {
         else {
             return false
         }
-    }
-
-    function getNumMetric(metricCmd) {
-        var metricStr = loadConfig(metricCmd)[0].split(" ").slice(-1)[0]
-        return parseFloat(metricStr)
     }
 
     function portON(state) {
@@ -115,7 +102,7 @@ exports.startAssist = function() {
                 return false
             }
         }
-      }
+        }
 
     function extPowerON(state) {
     if (state) {
@@ -147,41 +134,52 @@ exports.startAssist = function() {
         if (state) {
             asistStatus = "on"
         }
-        OvmsCommand.Exec("config set vehicle heatasist.heating " + asistStatus)
+        OvmsCommand.Exec("config set vehicle heatassist.heating " + asistStatus)
         OvmsEvents.Raise(mainEventName + 'heating.' + asistStatus)
 
     }
-    
+
     function assistKeeper() {
         OvmsEvents.Raise(mainEventName + 'status.enabled')
-        var assistOn = false
-    
+        var heartbeatCounter = 0
         function assistEngage() {
-            OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
-
-            if ((getNumMetric("metric list v.b.12v.voltage") > min12BatV) && metricStatus("metrics list v.e.heating") && (checkTempDiff("metrics list v.e.cabintemp","metrics list v.e.cabinsetpoint",assistOffset) || (metricStatus("me li v.e.cabinvent",/ screen/g) && !metricStatus("me li v.e.cabinvent",/feet/g)))) {
-                if (!assistOn) {
-                    var switchStatus = extPowerON(true)
+            heartbeatCounter += 1
+            try {
+                if (heartbeatCounter >= heartbeatLogInterval) {
+                    OvmsEvents.Raise(mainEventName + 'heartbeat.x' + heartbeatLogInterval)
+                    heartbeatCounter = 0
+                }
+                
+                var assistOn = metricStatus('power ext12v status',/ on/g)
+                if ((OvmsMetrics.AsFloat('v.b.12v.voltage') > min12BatV) && OvmsMetrics.Value('v.e.heating') && (checkTempDiff("v.e.cabintemp","v.e.cabinsetpoint",assistOffset))) {
+                    if (!assistOn) {
+                        var switchStatus = extPowerON(true)
+                        if (switchStatus) {
+                            assistOn = true
+                            setAssistStatus(assistOn)
+                        }
+                    }
+                    
+                }
+                else if (assistOn) {
+                    var switchStatus = extPowerON(false)
                     if (switchStatus) {
-                        assistOn = true
+                        assistOn = false
                         setAssistStatus(assistOn)
                     }
                 }
-                
+                // print("waiting...")
             }
-            else if (assistOn) {
-                var switchStatus = extPowerON(false)
-                if (switchStatus) {
-                    assistOn = false
-                    setAssistStatus(assistOn)
-                }
+            catch (jsError) {
+                print(mainEventName + ": Error Detected!")
+                print(jsError)
             }
-            // print("waiting...")
         }
-    
-        PubSub.subscribe(mainEventName + "heartbeat", assistEngage)
-        OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
-            
+        
+        PubSub.subscribe("ticker.1", assistEngage)
+        // PubSub.subscribe(mainEventName + "heartbeat", assistEngage) // swithced to ticker subscription due to OVMS Issue: 474
+        // OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
+
     }
     print("Heat Assist Script Loaded!")
     assistKeeper()
