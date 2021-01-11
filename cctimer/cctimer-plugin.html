@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.5   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.5.1   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -15,7 +15,7 @@
  *    timer in enabled state that will be active from 7AM to 8AM on Monday and Wednesday:
  *    "config set vehicle.cctimer 1-0700-0800-13"
  * Behavior:
- *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable 
+ *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable.  (Uses ticker.10 for now, due to Duktape issue: 474)
  *    and then will activate the remote heating/cooling using climatecontrol command. 
  * NOTE: Never remove an active timer as the script will keep turning on the CC until you reboot the unit or reload js engine. 
  * -->
@@ -181,7 +181,10 @@
     window.newTimers = []
 
     function contains(item,string) {
-      if (item.indexOf(string) > -1) {
+      if (item == undefined || string == undefined ) {
+        return false
+      }
+      else if (item.indexOf(string) > -1) {
           return true
       }
       else {
@@ -400,10 +403,13 @@
         }
     }
   
-  function getEgpioStatus (egpioMetric) {	
+  function getEgpioStatus (egpioMetric) {
     var egpioMetricName = egpioMetric.split('|')[0]	
-    var egpioMetricValue = parseInt(egpioMetric.split('|')[1])	
-    if (contains(metrics[egpioMetricName],egpioMetricValue)) {	
+    var egpioMetricValue = parseInt(egpioMetric.split('|')[1])
+    if (metrics == undefined || egpioMetric == undefined || egpioMetricValue == undefined) {
+      return false
+    }
+    else if (contains(metrics[egpioMetricName],egpioMetricValue)) {	
       return true	
     }	
     else {	
