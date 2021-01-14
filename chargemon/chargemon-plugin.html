@@ -4,7 +4,7 @@
  * Module plugin:
  *  Charging Monitor
  * 
- * Version 1.1.1   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.1.3   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - Add this file to Web Plugins as Page.
@@ -91,7 +91,7 @@
         </div>
         <div class="row" id="temp-info">
           <div style="margin-top:0.5em" class="col-lg-3 col-md-4 col-xs-12">
-            <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" ><strong>TEMPERATURE</strong></label>
+            <label class="btn btn-default col-lg-12 col-md-12 col-xs-12 disabled monitored" ><strong>BATTERY TEMPERATURE</strong></label>
           </div>
           <div style="padding: 0; margin-top:0.5em; margin-left:1em; height: 2.5em" class="progress col-lg-4 col-md-7 col-xs-11">
             <div class="progress-bar text-nowrap temp-bar progress-bar-striped progress-bar-animated monitored" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="50" id="battery-temp-bar">-</div>
@@ -127,6 +127,14 @@
                 <label class="btn btn-default disabled" id="start-charge" data-target="#vehicle-cmdres" stored-cmd="charge start">
                   <input type="radio" name="start">START</label>
                   </div>
+              <div class="btn-group" data-toggle="buttons"> 
+                <label class="btn btn-default disabled monitored">
+                  <input type="radio" name="abrp"><strong>ABRP</strong></label>
+                <label class="btn btn-default" id="stop-abrp" data-target="#vehicle-cmdres" stored-cmd="script eval abrp.send(0)" data-cmd="script eval abrp.send(0)">
+                  <input type="radio" name="stop">STOP</label>
+                <label class="btn btn-default" id="start-abrp" data-target="#vehicle-cmdres" stored-cmd="script eval abrp.send(1)" data-cmd="script eval abrp.send(1)">
+                  <input type="radio" name="start">START</label>
+                  </div>
             </div>
         </div>
 
@@ -140,7 +148,10 @@
   (function(){
 
     function contains(item,string) {
-      if (item.indexOf(string) > -1) {
+      if (item == undefined || string == undefined ) {
+        return false
+      }
+      else if (item.indexOf(string) > -1) {
           return true
       }
       else {
