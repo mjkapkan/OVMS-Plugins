@@ -59,7 +59,7 @@ function startRunning() {
 
         }
         catch (err) {
-            print("ERROR: Script " + mainEventName + " Failed! " + testCount)
+            print("ERROR: Script " + mainEventName + " Failed! ")
         }
     }
 
