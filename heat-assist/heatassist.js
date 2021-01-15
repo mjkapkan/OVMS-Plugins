@@ -1,5 +1,5 @@
 /**
- * /store/scripts/lib/event_heatassist.js
+ * /store/scripts/lib/heatassist.js
  * 
  * Module plugin:
  *  Heating assist module for controlling external heating element based on vehicle climate control metrics.
