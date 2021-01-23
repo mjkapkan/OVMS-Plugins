@@ -257,33 +257,47 @@
             var timerParams = timerText.split(':')
             var timerLabel = timerParams[0].split('.')[1]
             var timePeriodText = timerParams[1].trim()
-            var timePeriodarray = timePeriodText.split('-')
-            if (timePeriodarray[0] == 1) {
+            var timerFieldArray = timePeriodText.split('-')
+            if (timerFieldArray[0] == 1) {
                 var timerEnabled = true
             }
             else {
                 var timerEnabled = false
             }
-            var startTime = timePeriodarray[1]
-            var endTime = timePeriodarray[2]
-            if (timePeriodarray.length > 3) {
-                var weekDays = timePeriodarray[3].split("")
+            var startTime = timerFieldArray[1]
+            var endTime = timerFieldArray[2]
+            if (timerFieldArray.length > 3) {
+                var weekDays = timerFieldArray[3].split("")
             }
             else {
                 var weekDays = []
             }
-            
-            var startHours = startTime.split('').slice(0,2).join('')
-            var startMinutes = startTime.split('').slice(2,4).join('')
-            var startTimeParsed = startHours + ":" + startMinutes
+            if (timerFieldArray.length > 4 && timerFieldArray[4] == "1") {
+                var chargeUp = true
+            }
+            else {
+                var chargeUp = false
+            }
             var endHours = endTime.split('').slice(0,2).join('')
             var endMinutes = endTime.split('').slice(2,4).join('')
             var endTimeParsed = endHours + ":" + endMinutes
+
+            if (startTime == "auto") {
+                startTimeParsed = "auto"
+            }
+            else {
+                var startHours = startTime.split('').slice(0,2).join('')
+                var startMinutes = startTime.split('').slice(2,4).join('')
+                var startTimeParsed = startHours + ":" + startMinutes
+            }
+            
+            
             timerDict[timerLabel] = {
                 'Start': startTimeParsed,
                 'End': endTimeParsed,
                 'Enabled': timerEnabled,
                 'Weekdays': weekDays,
+                'Charge': chargeUp
             }
             return timerDict
     

@@ -65,47 +65,6 @@ exports.ccTimerOn = function() {
         return updatedList
     }
 
-    function parseTimer(timerText,timerDict) {
-        if (contains(timerText,'cctimer.')) {
-            var timerParams = timerText.split(':')
-            var timerLabel = timerParams[0].split('.')[1]
-            var timePeriodText = timerParams[1].trim()
-            var timePeriodarray = timePeriodText.split('-')
-            if (timePeriodarray[0] == 1) {
-                var timerEnabled = true
-            }
-            else {
-                var timerEnabled = false
-            }
-            var startTime = timePeriodarray[1]
-            var endTime = timePeriodarray[2]
-            if (timePeriodarray.length > 3) {
-                var weekDays = timePeriodarray[3].split("")
-            }
-            else {
-                var weekDays = []
-            }
-            
-            var startHours = startTime.split('').slice(0,2).join('')
-            var startMinutes = startTime.split('').slice(2,4).join('')
-            var startTimeParsed = startHours + ":" + startMinutes
-            var endHours = endTime.split('').slice(0,2).join('')
-            var endMinutes = endTime.split('').slice(2,4).join('')
-            var endTimeParsed = endHours + ":" + endMinutes
-            timerDict[timerLabel] = {
-                'Start': startTimeParsed,
-                'End': endTimeParsed,
-                'Enabled': timerEnabled,
-                'Weekdays': weekDays,
-            }
-            return timerDict
-    
-        }
-        else {
-            return false
-        }
-    }
-
     function loadConfig(cmd) {
         var cmdResponse = OvmsCommand.Exec(cmd)
         var configList = cmdResponse.split("\n")
@@ -139,38 +98,6 @@ exports.ccTimerOn = function() {
         return timerDict
     }
 
-    function setTimerStatus(timer_label) {
-        OvmsCommand.Exec("config set vehicle cctimer-active " + timer_label)
-        if (timer_label != "no") {
-            lastActivated = new Date()
-        }
-    }
-    
-    function airCon(state) {
-        if (state) {
-            cmdStatus = loadConfig("climatecontrol on")
-            if (cmdStatus) {
-                print("Success! CC ON")
-                return true
-            }
-            else {
-                print("CC ON Command Failed")
-                return false
-            }
-        }
-        else {
-            cmdStatus = loadConfig("climatecontrol off")
-            if (cmdStatus) {
-                print('Success! CC OFF')
-                return true
-            }
-            else {
-                print('CC OFF Command Failed')
-                return false
-            }
-        }
-      }
-    
     function checkTime(hh,mm,before) {
         var d = new Date() // current datetime
         var hours = parseInt(d.getHours())
@@ -221,6 +148,117 @@ exports.ccTimerOn = function() {
             return false
         }
     
+      }
+
+    function calcClimateStart (departureHour,departureMinute) {
+        timerEnd = new Date()
+        timerEnd.setHours(departureHour)
+        timerEnd.setMinutes(departureMinute)
+        // make calculated start minutes depending on outside weather and cabin temp diff
+        timerStartDate = addMinutes(timerEnd, -60)
+        timerStartHours = timerStartDate.getHours()
+        timerStartMinutes = timerStartDate.getMinutes()
+        timerStartTime = timerStartHours + ":" + timerStartMinutes
+        return timerStartTime
+    }
+
+    function calcChargeStart (departureHour,departureMinute) {
+        timerEnd = new Date()
+        timerEnd.setHours(departureHour)
+        timerEnd.setMinutes(departureMinute)
+        // make calculated start minutes depending time to charge metric
+        chargeStartDate = addMinutes(timerEnd, -60)
+        chargeStartHours = chargeStartDate.getHours()
+        chargeStartMinutes = chargeStartDate.getMinutes()
+        chargeStartTime = chargeStartHours + ":" + chargeStartMinutes
+        return chargeStartTime
+    }
+
+    function parseTimer(timerText,timerDict) {
+        if (contains(timerText,'cctimer.')) {
+            var timerParams = timerText.split(':')
+            var timerLabel = timerParams[0].split('.')[1]
+            var timePeriodText = timerParams[1].trim()
+            var timerFieldArray = timePeriodText.split('-')
+            if (timerFieldArray[0] == 1) {
+                var timerEnabled = true
+            }
+            else {
+                var timerEnabled = false
+            }
+            var startTime = timerFieldArray[1]
+            var endTime = timerFieldArray[2]
+            if (timerFieldArray.length > 3) {
+                var weekDays = timerFieldArray[3].split("")
+            }
+            else {
+                var weekDays = []
+            }
+            if (timerFieldArray.length > 4 && timerFieldArray[4] == "1") {
+                var chargeUp = true
+            }
+            else {
+                var chargeUp = false
+            }
+            var endHours = endTime.split('').slice(0,2).join('')
+            var endMinutes = endTime.split('').slice(2,4).join('')
+            var endTimeParsed = endHours + ":" + endMinutes
+
+            if (startTime == "auto") {
+                startTimeParsed = calcClimateStart(endHours,endMinutes)
+            }
+            else {
+                var startHours = startTime.split('').slice(0,2).join('')
+                var startMinutes = startTime.split('').slice(2,4).join('')
+                var startTimeParsed = startHours + ":" + startMinutes
+            }
+            
+            
+            timerDict[timerLabel] = {
+                'Start': startTimeParsed,
+                'End': endTimeParsed,
+                'Enabled': timerEnabled,
+                'Weekdays': weekDays,
+                'Charge': chargeUp
+            }
+            return timerDict
+    
+        }
+        else {
+            return false
+        }
+    }
+
+    function setTimerStatus(timer_label) {
+        OvmsCommand.Exec("config set vehicle cctimer-active " + timer_label)
+        if (timer_label != "no") {
+            lastActivated = new Date()
+        }
+    }
+    
+    function airCon(state) {
+        if (state) {
+            cmdStatus = loadConfig("climatecontrol on")
+            if (cmdStatus) {
+                print("Success! CC ON")
+                return true
+            }
+            else {
+                print("CC ON Command Failed")
+                return false
+            }
+        }
+        else {
+            cmdStatus = loadConfig("climatecontrol off")
+            if (cmdStatus) {
+                print('Success! CC OFF')
+                return true
+            }
+            else {
+                print('CC OFF Command Failed')
+                return false
+            }
+        }
       }
     
     function timerWaiter() {
