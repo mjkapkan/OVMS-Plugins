@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.5.1   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.6.1   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -17,6 +17,7 @@
  * Behavior:
  *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable.  (Uses ticker.10 for now, due to Duktape issue: 474)
  *    and then will activate the remote heating/cooling using climatecontrol command. 
+ * Beta Functions: Auto CC Start is currently a dummy 60 minute value before end time.
  * NOTE: Never remove an active timer as the script will keep turning on the CC until you reboot the unit or reload js engine. 
  * -->
 
@@ -639,10 +640,18 @@
         var enabled = ''
         var disabled = 'active'
         var labelStyle = 'default'
+        var startTimeDisplay = 'hidden'
+        var startTimeAuto = 'active'
+        var startTimeManual = ''
         if (ccTimers[currentTimer]['Enabled']) {
             enabled = 'active'
             disabled = ''
             labelStyle = 'primary'
+        }
+        if (ccTimers[currentTimer]['Start'] != 'auto') {
+            startTimeDisplay = ''
+            startTimeAuto = ''
+            startTimeManual = 'active'
         }
 
         if (contains(Object.keys(ccTimers[currentTimer]),'Active')) {
@@ -658,11 +667,13 @@
           $('#' + currentTimer).append('<' + colSeparator + '><div class="btn-group ' + gridSize + '12" ' + gridStyle + ' data-toggle="buttons"> <label class="btn btn-default ' + gridSize + '6 instasave ' + disabled + '"><input type="radio" name="disabled"> OFF</label><label class="btn btn-default ' + gridSize + '6 instasave ' + enabled + '" id="' + currentTimer + '-enabled"><input type="radio" name="enabled"> ON</label></div></' + colSeparator + '>')
           }
         
-        $('#' + currentTimer).append('<' + colSeparator + '><div ' + gridStyle + ' class="btn-group ' + gridSize + '12"> \
+        $('#' + currentTimer).append('<' + colSeparator + '><div ' + gridStyle + ' class="btn-group ' + gridSize + '12" data-toggle="buttons"> \
                                     <label class="btn btn-default disabled ' + gridSize + '6" style="font-weight:bold; height:2.5em;">\
                                                     <span class="value" style="font-size:16px; height:100%;">Start</span>\
                                                   </label>\
-                                    <label class="btn btn-clear ' + gridSize + '6" style="height:2.5em;">\
+                                                  <label class="btn btn-default timeselect dsk6 ' + startTimeAuto + '" id="' + currentTimer + '-autostart"><input type="radio" name="Auto">Auto</label>\
+                                                  <label class="btn btn-default timeselect ' + startTimeManual + ' dsk6"><input type="radio" name="Time">Time</label>\
+                                    <label class="btn btn-clear ' + startTimeDisplay + ' ' + gridSize + '6" id="' + currentTimer + '-starttimeview" style="height:2.5em;">\
                                         <input type="time" class="form-control rounded-0" id="' + currentTimer + '-start" name="time_from" required="" pattern="^[0-2][0-9]:[0-5][0-9]" placeholder="HH:MM" title="Start Time" value="' + ccTimers[currentTimer]['Start'] + '" style="margin-top:-0.5em; border-radius: 0 0.25em 0.25em 0 !important; margin-left:-1em; margin-right:1em; height:2.5em;">\
                                                   </label>\
                                       </div></' + colSeparator + '>')
@@ -714,6 +725,22 @@
             $("#timer-label-" + selectedTimer).addClass('label-primary')
           }
           saveTimers(selectedTimer)
+        }
+
+      })
+      $('.timeselect').off("click")
+      $('.timeselect').on('click', function() {
+        if (!$(this).hasClass("active")) {
+          var selectedTimer = $(this).closest('.timer-item').attr('id')
+          var timerStartAutoId = '#' + selectedTimer + '-autostart'
+          var timerStartManualId = '#' + selectedTimer + '-starttimeview'
+          if ($(timerStartAutoId).hasClass("active")) {
+            $(timerStartManualId).removeClass('hidden')
+          }
+          else {
+            $(timerStartAutoId).removeClass('active')
+            $(timerStartManualId).addClass('hidden')
+          }
         }
 
       })
@@ -784,7 +811,14 @@
             window.timerDictList[label]['Enabled'] = false
           }
           timerCmdOptions.push(timerEnabled)
-          timerCmdOptions.push($("#" + label + "-start")[0].value.replace(":",""))
+
+          if ($("#" + label + "-autostart.active")[0]) {
+            timerCmdOptions.push('auto')
+          }
+          else {
+            timerCmdOptions.push($("#" + label + "-start")[0].value.replace(":",""))
+          }
+
           timerCmdOptions.push($("#" + label + "-end")[0].value.replace(":",""))
 
           for  (var timerWeekday in [0,1,2,3,4,5,6]) {
