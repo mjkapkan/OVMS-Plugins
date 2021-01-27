@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.6.1   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.6.2   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install the backend script using instructions in it
@@ -17,7 +17,6 @@
  * Behavior:
  *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable.  (Uses ticker.10 for now, due to Duktape issue: 474)
  *    and then will activate the remote heating/cooling using climatecontrol command. 
- * Beta Functions: Auto CC Start is currently a dummy 60 minute value before end time.
  * NOTE: Never remove an active timer as the script will keep turning on the CC until you reboot the unit or reload js engine. 
  * -->
 
@@ -75,6 +74,12 @@
           <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-3 col-md-4 col-xs-12">
             <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-9 col-md-8 col-xs-7 disabled" id="monitored"><strong>SETPOINT TEMP.</strong></label><label class="btn btn-default col-xs-3 col-md-3 active monitored" data-toggle="tooltip" data-original-title="Available when Climate Control is ON only">
               <span class="value" id="temperature-setpoint">-</span>
+              <span class="unit">C°</span>
+            </label></div>
+          </div>
+          <div style="margin-top:0.5em; margin-left:-1em" class="col-lg-2 col-md-4 col-xs-12">
+            <div class="btn-group col-lg-12 col-md-12 col-xs-12"> <label class="btn btn-default col-lg-8 col-md-8 col-xs-7 disabled" id="monitored"><strong>OUTSIDE TEMP.</strong></label><label class="btn btn-default col-xs-3 col-md-3 col-lg-4 active monitored">
+              <span class="value" id="temperature-outside">-</span>
               <span class="unit">C°</span>
             </label></div>
           </div>
@@ -477,7 +482,7 @@
       return
     }
     if (boolValue == undefined || !boolValue) {
-      if (numDecimals != undefined) {
+      if (numDecimals != undefined && numDecimals) {
         metricText = parseFloat(metricText).toFixed(numDecimals)
         if (reversedLogic != undefined && reversedLogic) {
           metricText = metricText * -1
@@ -943,6 +948,7 @@
       }
       // start monitors
       monitorCalcMetrics (1000)
+      monitorMetric("v.e.temp","temperature-outside",undefined,undefined,0)
       monitorMetric("v.e.cabintemp","temperature-cabin",undefined,undefined,1)
       monitorMetric("v.e.cabinsetpoint","temperature-setpoint",undefined,undefined,1)
       monitorMetric("v.e.cabinvent","air-vent")
