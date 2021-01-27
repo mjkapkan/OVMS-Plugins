@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.5   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.6.2   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -19,7 +19,10 @@
  * Usage:
  *  - Timers can be added in GUI or with a command in shell. For example, the following command will add a new 
  *    timer in enabled state that will be active from 7AM to 8AM on Monday and Wednesday:
- *    "config set vehicle.cctimer 1-0700-0800-13"
+ *      "config set vehicle.cctimer 1-0700-0800-13"
+ *    timer in disabled state that will activate automatically depending on 
+ *    environment and cabin temperature to be ready by 5:30PM every day:
+ *      "config set vehicle.cctimer 1-auto-1730"
  * Behavior:
  *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable 
  *    and then will activate the remote heating/cooling using climatecontrol command. 
@@ -33,13 +36,15 @@ exports.ccTimerOn = function() {
     //         'Start': '16:45',
     //         'End': '17:00',
     //         'Enabled': true,
-    //         'Weekdays': [6,7]
+    //         'Weekdays': [6,7],
+    //         'Charge': false
     //     },
     //     'Evening2': {
-    //         'Start': '17:05',
+    //         'Start': 'auto',
     //         'End': '17:20',
     //         'Enabled': false,
-    //         'Weekdays': []
+    //         'Weekdays': [],
+    //         'Charge': false
     //     } 
     // }
 
@@ -47,8 +52,12 @@ exports.ccTimerOn = function() {
     var checkIntervalMs = 20000
     var chargingBefore = false
     var lastActivated = new Date()
-    var forceRecirc = true /* Forces Recirculation only if activated while charging (saves energy) */
+    var forceRecirc = true     /* Forces Recirculation only if activated while charging (saves energy) */
     var minutesUntilFresh = 10 /* Time until car switches ventilation to fresh air mode (10 minutes on Nissan Leaf) */
+    var heaterPower = 4000      /* Heater power in watts available for pre-heat */
+    var acPower = 2000         /* AC power in watts available for pre-cool */
+    var minCcDuration = 5      /* Minimum Precondition time duration in minutes */
+    var maxCcDuration = 180    /* Maximum Precondition time duration in minutes */
     
     
     function contains(item,string) {
@@ -134,7 +143,7 @@ exports.ccTimerOn = function() {
         var StartMinute = start_time.split(':')[1]
         var StopHour = end_time.split(':')[0]
         var StopMinute = end_time.split(':')[1]
-        return ((checkTime(StartHour,StartMinute,true) || parseInt(StartHour) > parseInt(StopHour)) && checkTime(StopHour,StopMinute))
+        return ((checkTime(StartHour,StartMinute,true) || parseInt(StartHour) > parseInt(StopHour)) && checkTime(StopHour,StopMinute)) || (checkTime(StartHour,StartMinute,true) && parseInt(StartHour) > parseInt(StopHour)) || (checkTime(StopHour,StopMinute) && checkTime(StartHour,StartMinute,true))
     }
 
 
@@ -150,16 +159,45 @@ exports.ccTimerOn = function() {
     
       }
 
+    function calcClimateDuration (heaterPower,acPower,minDuration,maxDuration) {
+        var ccPower = heaterPower
+        var heatLoss = 30000
+        var heaterCoef = 25
+        var setPoint = OvmsMetrics.AsFloat("v.e.cabinsetpoint")
+        var envTemp = OvmsMetrics.AsFloat("v.e.temp")
+        var cabinTemp = OvmsMetrics.AsFloat("v.e.cabintemp")
+        var defaultSetpoint = 21 // In case no metric available
+        if (setPoint == 0) {
+            setPoint = defaultSetpoint
+        }
+
+        if (setPoint < cabinTemp) {
+            ccPower = acPower
+        }
+
+        preconditionMinutes = Math.sqrt(1 + Math.abs(envTemp - setPoint)) * Math.abs((cabinTemp - setPoint) / heaterCoef / ccPower * heatLoss)
+
+        if (preconditionMinutes < minDuration) {
+            preconditionMinutes = minDuration
+        }
+        else if (preconditionMinutes > maxDuration) {
+            preconditionMinutes = maxDuration
+        }
+
+        return preconditionMinutes
+    }
+
     function calcClimateStart (departureHour,departureMinute) {
         timerEnd = new Date()
         timerEnd.setHours(departureHour)
         timerEnd.setMinutes(departureMinute)
-        // make calculated start minutes depending on outside weather and cabin temp diff
-        timerStartDate = addMinutes(timerEnd, -60)
+        timerStartDate = addMinutes(timerEnd, -calcClimateDuration(heaterPower,acPower,minCcDuration,maxCcDuration))
         timerStartHours = timerStartDate.getHours()
         timerStartMinutes = timerStartDate.getMinutes()
         timerStartTime = timerStartHours + ":" + timerStartMinutes
         return timerStartTime
+
+
     }
 
     function calcChargeStart (departureHour,departureMinute) {
