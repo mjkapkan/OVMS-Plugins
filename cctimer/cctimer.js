@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.6.2   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.6.3   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -54,8 +54,8 @@ exports.ccTimerOn = function() {
     var lastActivated = new Date()
     var forceRecirc = true     /* Forces Recirculation only if activated while charging (saves energy) */
     var minutesUntilFresh = 10 /* Time until car switches ventilation to fresh air mode (10 minutes on Nissan Leaf) */
-    var heaterPower = 4000      /* Heater power in watts available for pre-heat */
-    var acPower = 2000         /* AC power in watts available for pre-cool */
+    var heaterPower = 4000      /* Heater power available for pre-heat */
+    var acPower = 2000         /* AC power available for pre-cool */
     var minCcDuration = 5      /* Minimum Precondition time duration in minutes */
     var maxCcDuration = 180    /* Maximum Precondition time duration in minutes */
     
@@ -200,18 +200,6 @@ exports.ccTimerOn = function() {
 
     }
 
-    function calcChargeStart (departureHour,departureMinute) {
-        timerEnd = new Date()
-        timerEnd.setHours(departureHour)
-        timerEnd.setMinutes(departureMinute)
-        // make calculated start minutes depending time to charge metric
-        chargeStartDate = addMinutes(timerEnd, -60)
-        chargeStartHours = chargeStartDate.getHours()
-        chargeStartMinutes = chargeStartDate.getMinutes()
-        chargeStartTime = chargeStartHours + ":" + chargeStartMinutes
-        return chargeStartTime
-    }
-
     function parseTimer(timerText,timerDict) {
         if (contains(timerText,'cctimer.')) {
             var timerParams = timerText.split(':')
@@ -312,7 +300,7 @@ exports.ccTimerOn = function() {
             
             ccTimers = loadTimers()
             if (activeTimers.length == 0) {
-                chargingBefore = metricStatus("metric list v.c.charging")
+                chargingBefore = true // metricStatus("metric list v.c.charging")
             }
             for (var currentTimer in ccTimers) {
                 // print('Checking Timer: ' + currentTimer)
