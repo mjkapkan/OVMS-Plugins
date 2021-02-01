@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.6.4   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.6.5   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -52,7 +52,7 @@ exports.ccTimerOn = function() {
     var checkIntervalMs = 20000
     var chargingBefore = false
     var lastActivated = new Date()
-    var forceRecirc = true     /* Forces Recirculation only if activated while charging (saves energy) */
+    var forceRecirc = false     /* Forces Recirculation, only works with Leaf */
     // var minutesUntilFresh = 10 /* Time until car switches ventilation to fresh air mode (10 minutes on Nissan Leaf) use only if recirc value from v.e.cabinintake metric is unavailable */
     var heaterPower = 4000      /* Heater power in watts available for pre-heat, used to calculate pre-heat duration */
     var acPower = 2000         /* AC power in watts available for pre-cool, used to calculate pre-cool duration */
@@ -350,13 +350,14 @@ exports.ccTimerOn = function() {
                                 // var timeNow = new Date()
                                 // if (addMinutes(lastActivated,minutesUntilFresh) < timeNow) {
                                 if (!contains(OvmsMetrics.Value("v.e.cabinintake"),"recirc")) {
-                                    // Below sequence forces recirc on Leaf and also extends CC for the next 15 minutes
-                                    airCon(false)
-                                    airCon(false)
-                                    airCon(false)
-                                    airCon(false)
-                                    airCon(false)
-                                    airCon(true)
+                                    // Below sequence forces recirc on Leaf and also extends CC for the next 15 minutes without triggering HV relay
+                                    OvmsVehicle.ClimateControl(false)
+                                    OvmsVehicle.ClimateControl(false)
+                                    OvmsVehicle.ClimateControl(false)
+                                    OvmsVehicle.ClimateControl(false)
+                                    OvmsVehicle.ClimateControl(true)
+                                    OvmsVehicle.ClimateControl(true)
+                                    OvmsVehicle.ClimateControl(true)
                                 }
                                     
 
