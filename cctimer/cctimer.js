@@ -52,10 +52,10 @@ exports.ccTimerOn = function() {
     var checkIntervalMs = 20000
     var chargingBefore = false
     var lastActivated = new Date()
-    var forceRecirc = false     /* Forces Recirculation, only works with Leaf */
+    var forceRecirc = true     /* Forces Recirculation, only works with Leaf */
     // var minutesUntilFresh = 10 /* Time until car switches ventilation to fresh air mode (10 minutes on Nissan Leaf) use only if recirc value from v.e.cabinintake metric is unavailable */
-    var heaterPower = 4000      /* Heater power in watts available for pre-heat, used to calculate pre-heat duration */
-    var acPower = 2000         /* AC power in watts available for pre-cool, used to calculate pre-cool duration */
+    var heaterPower = 1000      /* Heater power in watts available for pre-heat, used to calculate pre-heat duration */
+    var acPower = 600         /* AC power in watts available for pre-cool, used to calculate pre-cool duration */
     var minCcDuration = 5      /* Minimum Precondition time duration in minutes */
     var maxCcDuration = 180    /* Maximum Precondition time duration in minutes */
     
@@ -350,7 +350,7 @@ exports.ccTimerOn = function() {
                                 // var timeNow = new Date()
                                 // if (addMinutes(lastActivated,minutesUntilFresh) < timeNow) {
                                 if (!contains(OvmsMetrics.Value("v.e.cabinintake"),"recirc")) {
-                                    // Below sequence forces recirc on Leaf and also extends CC for the next 15 minutes without triggering HV relay
+                                    // Below sequence forces recirc on Leaf and also extends CC for the next 15 minutes
                                     OvmsVehicle.ClimateControl(false)
                                     OvmsVehicle.ClimateControl(false)
                                     OvmsVehicle.ClimateControl(false)

@@ -5,13 +5,12 @@
  *  Heating assist module for controlling external heating element based on vehicle climate control metrics.
  *  This versionof the script is event based, meaning that you need to setup another script in events dir to run it repeatedley.
  * 
- * Version 1.1   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.1.2   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
  *  - add to /store/scripts/ovmsmain.js:
  *        heatAssist = require("lib/heatassist")
- *        heatAssist.startAssist()
  *  - As a percaution I recommend adding additional control to turn off heating when vehicle is turned off (use revelvant egpio on/off comamnd if you don't use ext12v):
  *      - add to /store/events/vehicle.off/ext12v
  *            power ext12v off
@@ -28,12 +27,15 @@
  *    ports (additional hardware required to control 12V relays).
  */
 
-exports.startAssist = function() {
+
+enablePlugin = exports.startAssist = function() {
 
     var mainEventName = "usr.heatassist."
-    var assistOffset = 1.5
+    var assistOffset = 3
     var min12BatV = 12.3
     var heartbeatLogInterval = 10
+    var customWarmUpInterval = 30
+    var customResumeInterval = 60
 
     function contains(item,string) {
         if (item.indexOf(string) > -1) {
@@ -69,6 +71,10 @@ exports.startAssist = function() {
 
     function checkTempDiff(realMetric,setpointMetric,offsetDeg) {
         var setfloat = OvmsMetrics.AsFloat(setpointMetric)
+        var defaultSetfloat = 21 // In case no metric available
+        if (setfloat == 0) {
+            setfloat = defaultSetfloat
+        }
         var realfloat = OvmsMetrics.AsFloat(realMetric)
         var cutofffloat = setfloat - offsetDeg
         if (cutofffloat > realfloat) {
@@ -134,7 +140,7 @@ exports.startAssist = function() {
         if (state) {
             asistStatus = "on"
         }
-        OvmsCommand.Exec("config set vehicle heatassist.heating " + asistStatus)
+        OvmsConfig.Set("vehicle", "heatassist.heating", asistStatus)
         OvmsEvents.Raise(mainEventName + 'heating.' + asistStatus)
 
     }
@@ -142,16 +148,67 @@ exports.startAssist = function() {
     function assistKeeper() {
         OvmsEvents.Raise(mainEventName + 'status.enabled')
         var heartbeatCounter = 0
+        var warmUpCounter = 0
+        var resumeCounter = 0
+        var chargingBefore = false
         function assistEngage() {
             heartbeatCounter += 1
+
+            if (OvmsConfig.Get("vehicle", "heatassist.warmupfix") == "on" &&
+                OvmsMetrics.Value('v.c.charging') &&
+                chargingBefore
+            ) {
+                if (OvmsMetrics.Value('v.e.heating')) {
+                    warmUpCounter += 1
+                }
+                if (!OvmsMetrics.Value('v.e.heating')) {
+                    resumeCounter += 1
+                }
+            }
+            
             try {
                 if (heartbeatCounter >= heartbeatLogInterval) {
                     OvmsEvents.Raise(mainEventName + 'heartbeat.x' + heartbeatLogInterval)
                     heartbeatCounter = 0
+                    if (!OvmsMetrics.Value('v.e.heating') &&
+                        OvmsMetrics.Value('v.c.charging') 
+                    ) {
+                      chargingBefore = true
+                    }
+                    else if (!OvmsMetrics.Value('v.e.heating') &&
+                            !OvmsMetrics.Value('v.c.charging') 
+                            ) {
+                              chargingBefore = false
+                            }
+                }
+
+                if (OvmsConfig.Get("vehicle", "heatassist.warmupfix") == "on" &&
+                    OvmsMetrics.Value('v.c.charging')  &&
+                    chargingBefore
+                ) {
+                    if (warmUpCounter >= customWarmUpInterval && 
+                        OvmsMetrics.Value('v.e.heating')
+                        ) {
+                            OvmsCommand.Exec("climatecontrol off")
+                            warmUpCounter = 0
+                    }
+                    if (resumeCounter >= customResumeInterval && 
+                        !OvmsMetrics.Value('v.e.heating')
+                        ) {
+                            OvmsCommand.Exec("climatecontrol on")
+                            resumeCounter = 0
+                    }
                 }
                 
+                
                 var assistOn = metricStatus('power ext12v status',/ on/g)
-                if ((OvmsMetrics.AsFloat('v.b.12v.voltage') > min12BatV) && OvmsMetrics.Value('v.e.heating') && (checkTempDiff("v.e.cabintemp","v.e.cabinsetpoint",assistOffset))) {
+
+                if (
+                    OvmsMetrics.Value('v.c.charging') &&
+                    OvmsConfig.Get("vehicle", "heatassist.warmupfix") == "on" &&
+                    OvmsMetrics.AsFloat('v.b.12v.voltage') > min12BatV &&
+                    checkTempDiff("v.e.cabintemp","v.e.cabinsetpoint",assistOffset)
+                ) {
                     if (!assistOn) {
                         var switchStatus = extPowerON(true)
                         if (switchStatus) {
@@ -159,15 +216,40 @@ exports.startAssist = function() {
                             setAssistStatus(assistOn)
                         }
                     }
-                    
                 }
-                else if (assistOn) {
-                    var switchStatus = extPowerON(false)
-                    if (switchStatus) {
-                        assistOn = false
-                        setAssistStatus(assistOn)
+                else if (
+                    OvmsMetrics.Value('v.e.charging12v') &&
+                    OvmsConfig.Get("vehicle", "heatassist.forced") == "on" &&
+                    checkTempDiff("v.e.cabintemp","v.e.cabinsetpoint",assistOffset)
+                ) {
+                    if (!assistOn) {
+                        var switchStatus = extPowerON(true)
+                        if (switchStatus) {
+                            assistOn = true
+                            setAssistStatus(assistOn)
+                        }
                     }
                 }
+                else {
+                    if ((OvmsMetrics.AsFloat('v.b.12v.voltage') > min12BatV) && OvmsMetrics.Value('v.e.heating') && (checkTempDiff("v.e.cabintemp","v.e.cabinsetpoint",assistOffset))) {
+                        if (!assistOn) {
+                            var switchStatus = extPowerON(true)
+                            if (switchStatus) {
+                                assistOn = true
+                                setAssistStatus(assistOn)
+                            }
+                        }
+                        
+                    }
+                    else if (assistOn) {
+                        var switchStatus = extPowerON(false)
+                        if (switchStatus) {
+                            assistOn = false
+                            setAssistStatus(assistOn)
+                        }
+                    }
+                }
+                
                 // print("waiting...")
             }
             catch (jsError) {
@@ -184,3 +266,5 @@ exports.startAssist = function() {
     print("Heat Assist Script Loaded!")
     assistKeeper()
 }
+
+enablePlugin()
