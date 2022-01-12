@@ -10,7 +10,6 @@
  *  - install at above path
  *  - add to /store/scripts/ovmsmain.js:
  *        ccTimer = require("lib/cctimer")
- *        ccTimer.ccTimerOn()
  *  - script reload
  * 
  * Config:
@@ -29,7 +28,7 @@
  * NOTE: Never remove an active timer as the script will keep turning on the CC until you reboot the unit or reload js engine.
  */
 
-exports.ccTimerOn = function() {
+enablePlugin = exports.ccTimerOn = function() {
     // Now loaded from config:
     // var ccTimers = {
     //     'Evening1': {
@@ -393,3 +392,5 @@ exports.ccTimerOn = function() {
     print("Timer Script Loaded!")
     timerWaiter()
 }
+
+enablePlugin()
