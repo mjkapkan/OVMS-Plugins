@@ -4,7 +4,7 @@
  * Module plugin:
  *  Climate Control Timer module with Web Plugin for controlling the preheat function in addition to OEM timer.
  * 
- * Version 1.6.5   Jaunius Kapkan <jaunius@gmx.com>
+ * Version 1.6.6   Jaunius Kapkan <jaunius@gmx.com>
  * 
  * Enable:
  *  - install at above path
@@ -23,7 +23,7 @@
  *    environment and cabin temperature to be ready by 5:30PM every day:
  *      "config set vehicle.cctimer 1-auto-1730"
  * Behavior:
- *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalMs variable 
+ *  - Script will check metrics for matching timers each 10 seconds as specified in checkIntervalSec variable 
  *    and then will activate the remote heating/cooling using climatecontrol command. 
  * NOTE: Never remove an active timer as the script will keep turning on the CC until you reboot the unit or reload js engine.
  */
@@ -48,7 +48,7 @@ enablePlugin = exports.ccTimerOn = function() {
     // }
 
     var mainEventName = "usr.cctimer."
-    var checkIntervalMs = 20000
+    var checkIntervalSec = 15
     var chargingBefore = false
     var lastActivated = new Date()
     var forceRecirc = true     /* Forces Recirculation, only works with Leaf */
@@ -301,92 +301,98 @@ enablePlugin = exports.ccTimerOn = function() {
     function timerWaiter() {
         OvmsEvents.Raise(mainEventName + 'status.enabled')
         setTimerStatus("no")
+        var tickerCounter = 0
         var ccTimers = {}
         var activeTimers = []
         
     
         function timerTrigger() {
-            try {
-                OvmsEvents.Raise(mainEventName + 'heartbeat')
-            
-            ccTimers = loadTimers()
-            if (activeTimers.length == 0) {
-                chargingBefore = metricStatus("metric list v.c.charging")
+            tickerCounter += 1
+            if (tickerCounter < checkIntervalSec) {
+                return
             }
-            for (var currentTimer in ccTimers) {
-                // print('Checking Timer: ' + currentTimer)
-                if (ccTimers[currentTimer].Enabled) {
+            try {
+                OvmsEvents.Raise(mainEventName + 'heartbeat.x' + checkIntervalSec)
+                tickerCounter = 0
+                
+                ccTimers = loadTimers()
+                if (activeTimers.length == 0) {
+                    chargingBefore = metricStatus("metric list v.c.charging")
+                }
+                for (var currentTimer in ccTimers) {
+                    // print('Checking Timer: ' + currentTimer)
+                    if (ccTimers[currentTimer].Enabled) {
 
-                    if (!contains(activeTimers,currentTimer)) {
-                        if (timeBetween(ccTimers[currentTimer].Start,ccTimers[currentTimer].End) && checkWeekday(ccTimers[currentTimer].Weekdays)) {
-                            if (airCon(true)) {
-                                setTimerStatus(currentTimer)
-                                activeTimers.push(currentTimer)
-                                OvmsEvents.Raise(mainEventName + currentTimer + ".started")
-                                OvmsNotify.Raise('info',mainEventName,'Climate Control Started by Timer: ' + currentTimer)
-                            }
-                        }
-                    }
-
-                    else {
-                        if (!timeBetween(ccTimers[currentTimer].Start,ccTimers[currentTimer].End) || !checkWeekday(ccTimers[currentTimer].Weekdays)) {
-                            OvmsEvents.Raise(mainEventName + currentTimer + ".stopped")
-                            OvmsNotify.Raise('info',mainEventName,'Climate Control Stopped by Timer: ' + currentTimer)
-                            activeTimers = removeFromList(activeTimers,currentTimer)
-                            if (airCon(false)) {
-                                setTimerStatus("no")
+                        if (!contains(activeTimers,currentTimer)) {
+                            if (timeBetween(ccTimers[currentTimer].Start,ccTimers[currentTimer].End) && checkWeekday(ccTimers[currentTimer].Weekdays)) {
+                                if (airCon(true)) {
+                                    setTimerStatus(currentTimer)
+                                    activeTimers.push(currentTimer)
+                                    OvmsEvents.Raise(mainEventName + currentTimer + ".started")
+                                    OvmsNotify.Raise('info',mainEventName,'Climate Control Started by Timer: ' + currentTimer)
+                                }
                             }
                         }
 
                         else {
-                            if (!metricStatus("metrics list v.e.heating") && !metricStatus("metrics list v.e.cooling")) {
-                                if (airCon(true)) {
-                                    setTimerStatus(currentTimer)
-                                    OvmsEvents.Raise(mainEventName + currentTimer + ".re-started")
+                            if (!timeBetween(ccTimers[currentTimer].Start,ccTimers[currentTimer].End) || !checkWeekday(ccTimers[currentTimer].Weekdays)) {
+                                OvmsEvents.Raise(mainEventName + currentTimer + ".stopped")
+                                OvmsNotify.Raise('info',mainEventName,'Climate Control Stopped by Timer: ' + currentTimer)
+                                activeTimers = removeFromList(activeTimers,currentTimer)
+                                if (airCon(false)) {
+                                    setTimerStatus("no")
                                 }
                             }
-                            else if (forceRecirc) {
-                                // var timeNow = new Date()
-                                // if (addMinutes(lastActivated,minutesUntilFresh) < timeNow) {
-                                if (!contains(OvmsMetrics.Value("v.e.cabinintake"),"recirc")) {
-                                    // Below sequence forces recirc on Leaf and also extends CC for the next 15 minutes
-                                    OvmsVehicle.ClimateControl(false)
-                                    OvmsVehicle.ClimateControl(false)
-                                    OvmsVehicle.ClimateControl(false)
-                                    OvmsVehicle.ClimateControl(false)
-                                    OvmsVehicle.ClimateControl(true)
-                                    OvmsVehicle.ClimateControl(true)
-                                    OvmsVehicle.ClimateControl(true)
-                                }
-                                    
 
+                            else {
+                                if (!metricStatus("metrics list v.e.heating") && !metricStatus("metrics list v.e.cooling")) {
+                                    if (airCon(true)) {
+                                        setTimerStatus(currentTimer)
+                                        OvmsEvents.Raise(mainEventName + currentTimer + ".re-started")
+                                    }
+                                }
+                                else if (forceRecirc) {
+                                    // var timeNow = new Date()
+                                    // if (addMinutes(lastActivated,minutesUntilFresh) < timeNow) {
+                                    if (!contains(OvmsMetrics.Value("v.e.cabinintake"),"recirc")) {
+                                        // Below sequence forces recirc on Leaf and also extends CC for the next 15 minutes
+                                        OvmsVehicle.ClimateControl(false)
+                                        OvmsVehicle.ClimateControl(false)
+                                        OvmsVehicle.ClimateControl(false)
+                                        OvmsVehicle.ClimateControl(false)
+                                        OvmsVehicle.ClimateControl(true)
+                                        OvmsVehicle.ClimateControl(true)
+                                        OvmsVehicle.ClimateControl(true)
+                                    }
+                                        
+
+                                }
                             }
                         }
                     }
-                }
-                else {
-                    if (contains(activeTimers,currentTimer)) {
-                        if (airCon(false)) {
-                            setTimerStatus("no")
-                            OvmsEvents.Raise(mainEventName + currentTimer + ".disabled")
-                            OvmsNotify.Raise('info',mainEventName,'Climate Control Stopped as Timer has been disabled: ' + currentTimer)
-                            activeTimers = removeFromList(activeTimers,currentTimer)
+                    else {
+                        if (contains(activeTimers,currentTimer)) {
+                            if (airCon(false)) {
+                                setTimerStatus("no")
+                                OvmsEvents.Raise(mainEventName + currentTimer + ".disabled")
+                                OvmsNotify.Raise('info',mainEventName,'Climate Control Stopped as Timer has been disabled: ' + currentTimer)
+                                activeTimers = removeFromList(activeTimers,currentTimer)
+                            }
                         }
                     }
+                    
                 }
                 
-            }
-            
-            // print("waiting...")
+                // print("waiting...")
             }
             catch (jsError) {
                 print(jsError)
             }
             
         }
-        PubSub.subscribe("ticker.10", timerTrigger)
+        PubSub.subscribe("ticker.1", timerTrigger)
         //PubSub.subscribe(mainEventName + "heartbeat", timerTrigger)
-        //OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalMs)
+        //OvmsEvents.Raise(mainEventName + "heartbeat", checkIntervalSec*1000)
             
     }
     print("Timer Script Loaded!")

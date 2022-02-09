@@ -149,9 +149,9 @@
               <colgroup>
                   <col style="width:20%">
                   <col style="width:10%">
-                  <col style="width:17.5%">
+                  <col style="width:27.5%">
                   <col style="width:17%">
-                  <col style="width:30.5%">
+                  <col style="width:20.5%">
                   <col style="width:5%">
                   </colgroup>
               </table>
@@ -678,15 +678,15 @@
                                                   </label>\
                                                   <label class="btn btn-default timeselect dsk6 ' + startTimeAuto + '" id="' + currentTimer + '-autostart"><input type="radio" name="Auto">Auto</label>\
                                                   <label class="btn btn-default timeselect ' + startTimeManual + ' dsk6"><input type="radio" name="Time">Time</label>\
-                                    <label class="btn btn-clear ' + startTimeDisplay + ' ' + gridSize + '6" id="' + currentTimer + '-starttimeview" style="height:2.5em;">\
-                                        <input type="time" class="form-control rounded-0" id="' + currentTimer + '-start" name="time_from" required="" pattern="^[0-2][0-9]:[0-5][0-9]" placeholder="HH:MM" title="Start Time" value="' + ccTimers[currentTimer]['Start'] + '" style="margin-top:-0.5em; border-radius: 0 0.25em 0.25em 0 !important; margin-left:-1em; margin-right:1em; height:2.5em;">\
-                                                  </label>\
-                                      </div></' + colSeparator + '>')
+                                                </div>\
+                                                <label class="btn btn-clear ' + startTimeDisplay + ' dsk6" id="' + currentTimer + '-starttimeview" style="height:2.5em;">\
+                                                  <input type="time" class="form-control rounded-0" id="' + currentTimer + '-start" name="time_from" required="" pattern="^[0-2][0-9]:[0-5][0-9]" placeholder="HH:MM" title="Start Time" value="' + ccTimers[currentTimer]['Start'] + '" style="margin-top:-0.5em; border-radius: 0 0.25em 0.25em 0 !important; margin-left:-1em; margin-right:1em; height:2.5em;">\
+                                                </label></' + colSeparator + '>')
         $('#' + currentTimer).append('<' + colSeparator + '><div ' + gridStyle + ' class="btn-group ' + gridSize + '12"> \
                                     <label class="btn btn-default disabled ' + gridSize + '6" style="font-weight:bold; height:2.5em;">\
                                                     <span class="value" style="font-size:16px; height:100%;">End</span>\
                                                   </label>\
-                                    <label class="btn btn-clear ' + gridSize + '6" style="height:2.5em;">\
+                                    <label class="btn btn-clear dsk6" style="height:2.5em;">\
                                         <input type="time" class="form-control rounded-0" id="' + currentTimer + '-end" name="time_to" required="" pattern="^[0-2][0-9]:[0-5][0-9]" placeholder="HH:MM" title="End Time" value="' + ccTimers[currentTimer]['End'] + '" style="margin-top:-0.5em; border-radius: 0 0.25em 0.25em 0 !important; margin-left:-1em; margin-right:1em; height:2.5em;">\
                                                   </label>\
                                       </div></' + colSeparator + '>')

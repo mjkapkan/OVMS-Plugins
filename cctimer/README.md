@@ -1,4 +1,4 @@
-# Climate Control Timer Plugin V1.5 for OVMS V3
+# Climate Control Timer Plugin V1.6 for OVMS V3
 Universal Climate Control Status & Pre-heat/cool timer Plugin for OVMS V3.
 
 ![Desktop View](readme_images/cctimer_gui.png)
@@ -21,7 +21,6 @@ Plugin requires back-end and front-end to work.
 - add the following to `/store/scripts/ovmsmain.js`:
   ```bash
   ccTimer = require("lib/cctimer")
-  ccTimer.ccTimerOn()
   ```
 - run `script reload` in console/shell.
 
@@ -44,7 +43,7 @@ To uninstall, just remove the plugin in `Web Plugins` page.
   ```
 
 ## Behavior
-- Script will check metrics for matching timers each 10 seconds as specified in `checkIntervalMs` (currently not working due to Duktape Issue 474) variable and then will activate the remote heating/cooling using climatecontrol command. 
+- Script will check metrics for matching timers each 10 seconds as specified in `checkInterval` variable and then will activate the remote heating/cooling using climatecontrol command. 
 - with each check or timer on/off you will see a message in the OVMS event log and a notification to App/WebUI.
 
 NOTE: Never remove an active timer as the script will keep turning ON the climate control until you reboot the unit or reload JavaScript engine.
@@ -54,7 +53,6 @@ NOTE: Never remove an active timer as the script will keep turning ON the climat
 - If you find anything else, please report here as issues.
 
 ## Upcoming Features
-- Automatically calculate climate control start time depending on ambient temperature.
 - Add minimum SOC as an option for each timer.
 - Add "only while plugged-in" option.
 - Add Charging Timer functionality.
